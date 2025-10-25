@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - ShopHub</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #e0f2fe;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: #1f2937;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 450px;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e5e7eb;
+      overflow: hidden;
+    }
+
+    .header {
+      background: #0ea5e9;
+      color: white;
+      text-align: center;
+      padding: 30px 20px;
+    }
+
+    .header h1 {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      font-size: 1em;
+      opacity: 0.9;
+    }
+
+    /* Role Buttons */
+    .role-buttons {
+      display: flex;
+      justify-content: space-around;
+      background: #f0f9ff;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .role-btn {
+      flex: 1;
+      padding: 15px;
+      background: transparent;
+      border: none;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      color: #6b7280;
+      transition: all 0.3s ease;
+    }
+
+    .role-btn.active {
+      background: #0ea5e9;
+      color: white;
+    }
+
+    .role-btn:hover {
+      background: #0284c7;
+      color: white;
+    }
+
+    .form-container {
+      padding: 35px;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .section-icon {
+      width: 70px;
+      height: 70px;
+      margin: 0 auto 15px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2em;
+      color: white;
+    }
+
+    .customer-icon {
+      background: #0ea5e9;
+    }
+
+    .seller-icon {
+      background: #3b82f6;
+    }
+
+    .admin-icon {
+      background: #a855f7;
+    }
+
+    .section-header h2 {
+      color: #1f2937;
+      font-size: 1.5em;
+      margin-bottom: 5px;
+    }
+
+    .section-header p {
+      color: #6b7280;
+      font-size: 0.9em;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #1f2937;
+      font-weight: 500;
+      font-size: 0.95em;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #bae6fd;
+      border-radius: 8px;
+      font-size: 1em;
+      transition: all 0.3s ease;
+      outline: none;
+      background: #ffffff;
+    }
+
+    input:focus {
+      border-color: #0ea5e9;
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.05em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: white;
+      margin-top: 10px;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-primary {
+      background: #0ea5e9;
+    }
+
+    .btn-primary:hover {
+      background: #0284c7;
+    }
+
+    .forgot-password {
+      text-align: center;
+      margin-top: 15px;
+    }
+
+    .forgot-password a {
+      color: #0ea5e9;
+      text-decoration: none;
+      font-size: 0.9em;
+    }
+
+    .forgot-password a:hover {
+      text-decoration: underline;
+    }
+
+    .signup-link {
+      text-align: center;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 0.9em;
+      color: #6b7280;
+    }
+
+    .signup-link a {
+      color: #0ea5e9;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .signup-link a:hover {
+      text-decoration: underline;
+    }
+
+    .message {
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      font-size: 0.9em;
+      display: none;
+    }
+
+    .message.success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #059669;
+    }
+
+    .message.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #f87171;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🛍 ShopHub</h1>
+      <p>Your Ultimate Multi-Vendor Shopping Destination</p>
+    </div>
+
+    <!-- Role Switch Buttons -->
+    <div class="role-buttons">
+      <button class="role-btn active" id="btnCustomer">Customer</button>
+      <button class="role-btn" id="btnSeller">Seller</button>
+      <button class="role-btn" id="btnAdmin">Admin</button>
+    </div>
+
+    <!-- Form Container -->
+    <div class="form-container" id="formContainer">
+      <!-- Form will load dynamically -->
+    </div>
+  </div>
+
+  <script>
+    const formContainer = document.getElementById("formContainer");
+    const roleButtons = document.querySelectorAll(".role-btn");
+
+    const forms = {
+      customer: `
+        <div class="section-header">
+          <div class="section-icon customer-icon">👤</div>
+          <h2>Customer Login</h2>
+          <p>Shop your favorite products</p>
+        </div>
+
+        <div id="customerMessage" class="message"></div>
+        <form id="customerForm">
+          <div class="form-group">
+            <label for="customerUsername">Username</label>
+            <input type="text" id="customerUsername" placeholder="Enter your username" required />
+          </div>
+          <div class="form-group">
+            <label for="customerPassword">Password</label>
+            <input type="password" id="customerPassword" placeholder="Enter your password" required />
+          </div>
+          <button type="submit" class="btn btn-primary">Login</button>
+          <div class="forgot-password"><a href="#">Forgot Password?</a></div>
+          <div class="signup-link">Don't have an account? <a href="#">Sign Up</a></div>
+        </form>
+      `,
+      seller: `
+        <div class="section-header">
+          <div class="section-icon seller-icon">🏪</div>
+          <h2>Seller Login</h2>
+          <p>Manage your store & products</p>
+        </div>
+
+        <div id="sellerMessage" class="message"></div>
+        <form id="sellerForm">
+          <div class="form-group">
+            <label for="sellerId">Seller ID</label>
+            <input type="text" id="sellerId" placeholder="Enter your seller ID" required />
+          </div>
+          <div class="form-group">
+            <label for="sellerPassword">Password</label>
+            <input type="password" id="sellerPassword" placeholder="Enter your password" required />
+          </div>
+          <button type="submit" class="btn btn-primary">Login</button>
+          <div class="forgot-password"><a href="#">Forgot Password?</a></div>
+          <div class="signup-link">Want to sell? <a href="#">Register as Seller</a></div>
+        </form>
+      `,
+      admin: `
+        <div class="section-header">
+          <div class="section-icon admin-icon">⚙</div>
+          <h2>Admin Login</h2>
+          <p>Platform management access</p>
+        </div>
+
+        <div id="adminMessage" class="message"></div>
+        <form id="adminForm">
+          <div class="form-group">
+            <label for="adminId">Admin ID</label>
+            <input type="text" id="adminId" placeholder="Enter your admin ID" required />
+          </div>
+          <div class="form-group">
+            <label for="adminPassword">Password</label>
+            <input type="password" id="adminPassword" placeholder="Enter your password" required />
+          </div>
+          <button type="submit" class="btn btn-primary">Login</button>
+          <div class="forgot-password"><a href="#">Forgot Password?</a></div>
+        </form>
+      `,
+    };
+
+    // Load default (customer)
+    formContainer.innerHTML = forms.customer;
+
+    // Switch Form Function
+    roleButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        roleButtons.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        if (btn.id === "btnCustomer") {
+          formContainer.innerHTML = forms.customer;
+        } else if (btn.id === "btnSeller") {
+          formContainer.innerHTML = forms.seller;
+        } else {
+          formContainer.innerHTML = forms.admin;
+        }
+      });
+    });
+
+    // Optional: Add login success message handlers (you can reuse your earlier logic)
+  </script>
+</body>
+</html>

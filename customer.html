@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopZone</title>
+    <link rel="stylesheet" href="customer.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <header class="app-header">
+        <div class="container header-container">
+            <div class="header-left">
+                <h1 class="logo" data-action="change-view" data-view="products">
+                    🛒 ShopZone
+                </h1>
+            </div>
+
+            <div class="header-search-desktop">
+                <div class="search-bar-wrapper">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input
+                        type="text"
+                        id="search-input-desktop"
+                        placeholder="Search for products, brands and more..."
+                        class="search-input"
+                    />
+                </div>
+            </div>
+
+            <div class="header-nav">
+                <button class="nav-button" title="Orders" data-action="change-view" data-view="orders">
+                    <i data-lucide="package"></i>
+                    <span id="orders-count-badge" class="nav-badge hidden"></span>
+                </button>
+                <button class="nav-button" title="Wishlist" data-action="change-view" data-view="wishlist">
+                    <i data-lucide="heart" id="wishlist-icon"></i>
+                    <span id="wishlist-count-badge" class="nav-badge hidden"></span>
+                </button>
+                <button class="nav-button" title="Cart" data-action="change-view" data-view="cart">
+                    <i data-lucide="shopping-cart"></i>
+                    <span id="cart-count-badge" class="nav-badge hidden"></span>
+                </button>
+            </div>
+        </div>
+
+        <div class="container header-search-mobile">
+            <div class="search-bar-wrapper">
+                <i data-lucide="search" class="search-icon"></i>
+                <input
+                    type="text"
+                    id="search-input-mobile"
+                    placeholder="Search products..."
+                    class="search-input"
+                />
+            </div>
+        </div>
+    </header>
+
+    <main class="container main-content">
+        <div id="products-view"></div>
+        <div id="cart-view" class="hidden"></div>
+        <div id="wishlist-view" class="hidden"></div>
+        <div id="orders-view" class="hidden"></div>
+    </main>
+
+    <script src="customer.js"></script>
+</body>
+</html>

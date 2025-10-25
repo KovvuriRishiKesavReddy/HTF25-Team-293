@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Orders Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: #e0f2fe;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 24px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-title h1 {
+            font-size: 36px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .header-title p {
+            font-size: 18px;
+            color: #6b7280;
+        }
+
+        .revenue-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f0f9ff;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid #bae6fd;
+        }
+
+        .revenue-box i {
+            color: #0284c7;
+            font-size: 24px;
+        }
+
+        .revenue-box .revenue-label {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .revenue-box .revenue-amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            background: white;
+            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 32px;
+        }
+
+        .nav-tabs-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 16px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            padding: 16px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #6b7280;
+            transition: all 0.3s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none; /* Added for the 'a' tag */
+        }
+
+        .nav-tab:hover {
+            color: #0284c7;
+        }
+
+        .nav-tab.active {
+            color: #0284c7;
+            border-bottom-color: #0284c7;
+        }
+
+        .nav-tab .badge {
+            background: #e5e7eb;
+            color: #6b7280;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .nav-tab.active .badge {
+            background: #bae6fd;
+            color: #0284c7;
+        }
+
+        /* Stats Cards */
+        .stats-container {
+            max-width: 1280px;
+            margin: 0 auto 32px;
+            padding: 0 16px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            border: 1px solid #e5e7eb;
+            cursor: pointer;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card.active {
+            border-width: 2px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+        }
+        /* ... (add this with your other .stat-card styles) ... */
+        .stat-card.returned .stat-card-info h3 { color: #dc2626; }
+        .stat-card.returned .stat-icon { background: #ef4444; }
+        .stat-card.returned.active { border-color: #dc2626; background: #ffebeb; }
+
+        /* ... (add this with your other .status-badge styles) ... */
+        .status-badge.returned {
+            background: #ffebeb;
+            border-color: #fca5a5;
+            color: #dc2626;
+        }
+
+        /* ... (add this with your other .order-card styles) ... */
+        /* This adds colored borders based on status */
+        .order-card.pending { border-left-color: #f59e0b; }
+        .order-card.processing { border-left-color: #3b82f6; }
+        .order-card.out_for_delivery { border-left-color: #a855f7; }
+        .order-card.delivered { border-left-color: #10b981; }
+        .order-card.returned { border-left-color: #ef4444; }
+
+        .stat-card-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-card-info p {
+            font-size: 14px;
+            color: #6b7280;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .stat-card-info h3 {
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .stat-card.all .stat-card-info h3 { color: #0284c7; }
+        .stat-card.all .stat-icon { background: #0ea5e9; }
+        .stat-card.all.active { border-color: #0284c7; background: #f0f9ff; }
+
+        .stat-card.pending .stat-card-info h3 { color: #d97706; }
+        .stat-card.pending .stat-icon { background: #f59e0b; }
+        .stat-card.pending.active { border-color: #d97706; background: #fffbeb; }
+
+        .stat-card.processing .stat-card-info h3 { color: #2563eb; }
+        .stat-card.processing .stat-icon { background: #3b82f6; }
+        .stat-card.processing.active { border-color: #2563eb; background: #eff6ff; }
+
+        .stat-card.out_for_delivery .stat-card-info h3 { color: #9333ea; }
+        .stat-card.out_for_delivery .stat-icon { background: #a855f7; }
+        .stat-card.out_for_delivery.active { border-color: #9333ea; background: #faf5ff; }
+
+        /* Filters */
+        .filters-container {
+            max-width: 1280px;
+            margin: 0 auto 32px;
+            padding: 0 16px;
+        }
+
+        .filters-box {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #bae6fd;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #0284c7;
+        }
+
+        /* Orders List */
+        .orders-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 16px 48px;
+        }
+
+        .order-card {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 16px;
+            border-left: 4px solid #0ea5e9;
+            transition: all 0.3s;
+        }
+
+        .order-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .order-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .order-info {
+            display: flex;
+            gap: 16px;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .order-avatar {
+            width: 56px;
+            height: 56px;
+            background: #0ea5e9;
+            color: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .order-details {
+            flex: 1;
+        }
+
+        .order-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+        }
+
+        .order-header h3 {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        .order-id {
+            font-size: 14px;
+            color: #6b7280;
+            font-family: monospace;
+        }
+
+        .order-product {
+            color: #374151;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .order-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 14px;
+            color: #6b7280;
+            flex-wrap: wrap;
+        }
+
+        .order-price {
+            font-weight: bold;
+            color: #0284c7;
+            font-size: 18px;
+        }
+        
+        /* Style for returned order price */
+        .order-card.returned .order-price {
+            color: #dc2626;
+            text-decoration: line-through;
+        }
+
+        .order-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 12px;
+            border: 2px solid;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .status-badge.pending {
+            background: #fffbeb;
+            border-color: #fcd34d;
+            color: #d97706;
+        }
+
+        .status-badge.processing {
+            background: #eff6ff;
+            border-color: #93c5fd;
+            color: #2563eb;
+        }
+
+        .status-badge.out_for_delivery {
+            background: #faf5ff;
+            border-color: #d8b4fe;
+            color: #9333ea;
+        }
+
+        .status-badge.delivered {
+            background: #ecfdf5;
+            border-color: #86efac;
+            color: #059669;
+        }
+
+        .status-selector {
+            position: relative;
+        }
+
+        .status-dropdown {
+            background: #0ea5e9;
+            color: white;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            appearance: none;
+        }
+
+        .status-dropdown:hover {
+            background: #0284c7;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(14, 165, 233, 0.3);
+        }
+
+        .status-selector select {
+            background: #0ea5e9;
+            color: white;
+            padding: 10px 40px 10px 24px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .status-selector select:hover {
+            background: #0284c7;
+        }
+
+        .status-selector i {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: white;
+        }
+
+        .no-orders {
+            background: white;
+            padding: 48px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #bae6fd;
+        }
+
+        .no-orders i {
+            font-size: 64px;
+            color: #d1d5db;
+            margin-bottom: 16px;
+        }
+
+        .no-orders p {
+            font-size: 20px;
+            color: #6b7280;
+        }
+
+        @media (max-width: 768px) {
+            .header-title h1 {
+                font-size: 28px;
+            }
+
+            .order-content {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .order-actions {
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-container">
+            <div class="header-title">
+                <h1>Orders Dashboard</h1>
+                <p>Manage and track all your customer orders</p>
+            </div>
+            <div class="revenue-box">
+                <i class="fas fa-chart-line"></i>
+                <div>
+                    <div class="revenue-label">Total Revenue</div>
+                    <div class="revenue-amount" id="totalRevenue">₹0.00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-tabs">
+        <div class="nav-tabs-container">
+            <button class="nav-tab active" data-status="all" onclick="filterByStatus('all')">
+                <i class="fas fa-th-large"></i>
+                All Orders
+                <span class="badge" id="allBadge">0</span>
+            </button>
+            <button class="nav-tab" data-status="pending" onclick="filterByStatus('pending')">
+                <i class="fas fa-clock"></i>
+                Pending
+                <span class="badge" id="pendingBadge">0</span>
+            </button>
+            <button class="nav-tab" data-status="processing" onclick="filterByStatus('processing')">
+                <i class="fas fa-box"></i>
+                Processing
+                <span class="badge" id="processingBadge">0</span>
+            </button>
+            <button class="nav-tab" data-status="out_for_delivery" onclick="filterByStatus('out_for_delivery')">
+                <i class="fas fa-truck"></i>
+                Out for Delivery
+                <span class="badge" id="outForDeliveryBadge">0</span>
+            </button>
+            <button class="nav-tab" data-status="delivered" onclick="filterByStatus('delivered')">
+                <i class="fas fa-check-circle"></i>
+                Delivered
+                <span class="badge" id="deliveredBadge">0</span>
+            </button>
+            <button class="nav-tab" data-status="returned" onclick="filterByStatus('returned')">
+                <i class="fas fa-undo"></i>
+                Returned
+                <span class="badge" id="returnedBadge">0</span>
+            </button>
+            <a href="product-analytics.html" class="nav-tab">
+                <i class="fas fa-chart-pie"></i>
+                Analytics
+            </a>
+        </div>
+    </div>
+
+    <div class="stats-container">
+        <div class="stats-grid">
+            <div class="stat-card all active" onclick="filterByStatus('all')">
+                <div class="stat-card-content">
+                    <div class="stat-card-info">
+                        <p>All Orders</p>
+                        <h3 id="totalOrders">0</h3>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-th-large"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card pending" onclick="filterByStatus('pending')">
+                <div class="stat-card-content">
+                    <div class="stat-card-info">
+                        <p>Pending</p>
+                        <h3 id="pendingOrders">0</h3>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card processing" onclick="filterByStatus('processing')">
+                <div class="stat-card-content">
+                    <div class="stat-card-info">
+                        <p>Processing</p>
+                        <h3 id="processingOrders">0</h3>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-box"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card out_for_delivery" onclick="filterByStatus('out_for_delivery')">
+                <div class="stat-card-content">
+                    <div class="stat-card-info">
+                        <p>Out for Delivery</p>
+                        <h3 id="outForDeliveryOrders">0</h3>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card returned" onclick="filterByStatus('returned')">
+                <div class="stat-card-content">
+                    <div class="stat-card-info">
+                        <p>Returned</p>
+                        <h3 id="returnedOrders">0</h3>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-undo"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="filters-container">
+        <div class="filters-box">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search by customer, product, or order ID...">
+            </div>
+        </div>
+    </div>
+
+    <div class="orders-container">
+        <div id="ordersList"></div>
+    </div>
+
+    <script>
+        // Orders data
+        let orders = [
+            {
+                id: 'ORD-2024-001',
+                customer: 'Sarah Johnson',
+                product: 'Wireless Bluetooth Headphones',
+                quantity: 2,
+                amount: 159.98,
+                date: '2024-10-24',
+                status: 'pending',
+                avatar: 'SJ'
+            },
+            {
+                id: 'ORD-2024-002',
+                customer: 'Michael Chen',
+                product: 'Smart Fitness Watch',
+                quantity: 1,
+                amount: 299.99,
+                date: '2024-10-24',
+                status: 'processing',
+                avatar: 'MC'
+            },
+            {
+                id: 'ORD-2024-003',
+                customer: 'Emily Rodriguez',
+                product: 'USB-C Charging Cable (3-Pack)',
+                quantity: 1,
+                amount: 24.99,
+                date: '2024-10-23',
+                status: 'out_for_delivery',
+                avatar: 'ER'
+            },
+            {
+                id: 'ORD-2024-004',
+                customer: 'David Kim',
+                product: 'Portable Power Bank 20000mAh',
+                quantity: 3,
+                amount: 149.97,
+                date: '2024-10-23',
+                status: 'delivered',
+                avatar: 'DK'
+            },
+            {
+                id: 'ORD-2024-005',
+                customer: 'Lisa Thompson',
+                product: 'Mechanical Gaming Keyboard',
+                quantity: 1,
+                amount: 129.99,
+                date: '2024-10-22',
+                status: 'pending',
+                avatar: 'LT'
+            },
+            {
+                id: 'ORD-2024-006',
+                customer: 'James Wilson',
+                product: 'Wireless Mouse - Ergonomic',
+                quantity: 2,
+                amount: 79.98,
+                date: '2024-10-22',
+                status: 'processing',
+                avatar: 'JW'
+            },
+            {
+                id: 'ORD-2024-007',
+                customer: 'Amanda Martinez',
+                product: 'Laptop Stand - Aluminum',
+                quantity: 1,
+                amount: 89.99,
+                date: '2024-10-22',
+                status: 'out_for_delivery',
+                avatar: 'AM'
+            },
+            {
+                id: 'ORD-2024-008',
+                customer: 'Robert Taylor',
+                product: 'Webcam HD 1080p',
+                quantity: 2,
+                amount: 119.98,
+                date: '2024-10-21',
+                status: 'delivered',
+                avatar: 'RT'
+            }
+        ];
+        
+        let allOrdersData = JSON.parse(localStorage.getItem('allOrders'));
+        if (!allOrdersData) {
+            // On first run, store the default data
+            console.log("No data found, initializing localStorage...");
+            localStorage.setItem('allOrders', JSON.stringify(orders));
+        } else {
+            // On subsequent loads, use the stored data
+            console.log("Loading orders from localStorage...");
+            orders = allOrdersData;
+        }
+
+        // --- THIS WAS THE MISSING LINE ---
+        const EXCHANGE_RATE = 83;
+
+        const statusConfig = {
+            pending: { label: 'Pending', icon: 'fa-clock' },
+            processing: { label: 'Processing', icon: 'fa-box' },
+            out_for_delivery: { label: 'Out for Delivery', icon: 'fa-truck' },
+            delivered: { label: 'Delivered', icon: 'fa-check-circle' },
+            returned: { label: 'Returned', icon: 'fa-undo' }
+        };
+
+        let currentFilter = 'all';
+
+        // Update stats
+        function updateStats() {
+            const stats = {
+                total: orders.length,
+                pending: orders.filter(o => o.status === 'pending').length,
+                processing: orders.filter(o => o.status === 'processing').length,
+                outForDelivery: orders.filter(o => o.status === 'out_for_delivery').length,
+                delivered: orders.filter(o => o.status === 'delivered').length,
+                returned: orders.filter(o => o.status === 'returned').length // <-- FIXED: Added comma
+            };
+
+            const totalRevenue = orders
+                .filter(o => o.status !== 'returned')
+                .reduce((sum, o) => sum + o.amount, 0) * EXCHANGE_RATE;
+
+            document.getElementById('totalOrders').textContent = stats.total;
+            document.getElementById('pendingOrders').textContent = stats.pending;
+            document.getElementById('processingOrders').textContent = stats.processing;
+            document.getElementById('outForDeliveryOrders').textContent = stats.outForDelivery;
+            document.getElementById('returnedOrders').textContent = stats.returned;
+            document.getElementById('totalRevenue').textContent = '₹' + totalRevenue.toFixed(2);
+
+            // Update nav badges
+            document.getElementById('allBadge').textContent = stats.total;
+            document.getElementById('pendingBadge').textContent = stats.pending;
+            document.getElementById('processingBadge').textContent = stats.processing;
+            document.getElementById('outForDeliveryBadge').textContent = stats.outForDelivery;
+            document.getElementById('deliveredBadge').textContent = stats.delivered;
+            document.getElementById('returnedBadge').textContent = stats.returned;
+        }
+
+        // Filter by status (from tiles or nav)
+        function filterByStatus(status) {
+            currentFilter = status;
+
+            // Update active stat card
+            document.querySelectorAll('.stat-card').forEach(card => {
+                card.classList.remove('active');
+            });
+
+            // Only try to activate a stat card if it exists
+            const activeStatCard = document.querySelector(`.stat-card.${status}`);
+            if (activeStatCard) {
+                activeStatCard.classList.add('active');
+            }
+            
+            // Update active nav tab
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Find and activate the correct nav tab using data-status
+            const activeTab = document.querySelector(`.nav-tab[data-status="${status}"]`);
+            if (activeTab) {
+                activeTab.classList.add('active');
+            }
+
+            renderOrders(getFilteredOrders());
+        }
+
+        // Get available status options based on current status
+        function getStatusOptions(currentStatus) {
+            const allStatuses = ['pending', 'processing', 'out_for_delivery', 'delivered'];
+            const currentIndex = allStatuses.indexOf(currentStatus);
+
+            // If it's returned, no more options
+            if (currentStatus === 'returned' || currentStatus === 'delivered') { 
+                return []; 
+            }
+            
+            // Can only move forward in the delivery process
+            const options = allStatuses.slice(currentIndex);
+            
+            // Add 'returned' as an option for any status except 'pending'
+            if (currentStatus !== 'pending') {
+                 options.push('returned');
+            }
+            return [...new Set(options)]; // Use Set to avoid duplicates
+        }
+
+        // Render orders
+        function renderOrders(filteredOrders) {
+            const ordersList = document.getElementById('ordersList');
+
+            if (filteredOrders.length === 0) {
+                ordersList.innerHTML = `
+                    <div class="no-orders">
+                        <i class="fas fa-box"></i>
+                        <p>No orders found matching your criteria</p>
+                    </div>
+                `;
+                return;
+            }
+
+            ordersList.innerHTML = filteredOrders.map(order => {
+                const config = statusConfig[order.status];
+                const statusOptions = getStatusOptions(order.status);
+
+                // --- FIXED: Hide dropdown if delivered OR returned ---
+                const statusSelector = (order.status !== 'delivered' && order.status !== 'returned') ? `
+                    <div class="status-selector">
+                        <select onchange="updateOrderStatus('${order.id}', this.value)" class="status-dropdown">
+                            ${statusOptions.map(status => `
+                                <option value="${status}" ${status === order.status ? 'selected' : ''}>
+                                    ${statusConfig[status].label}
+                                </option>
+                            `).join('')}
+                        </select>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                ` : '';
+
+                // --- FIXED: Added ${order.status} class for colored border ---
+                return `
+                    <div class="order-card ${order.status}">
+                        <div class="order-content">
+                            <div class="order-info">
+                                <div class="order-avatar">${order.avatar}</div>
+                                <div class="order-details">
+                                    <div class="order-header">
+                                        <h3>${order.customer}</h3>
+                                        <span class="order-id">#${order.id}</span>
+                                    </div>
+                                    <div class="order-product">${order.product}</div>
+                                    <div class="order-meta">
+                                        <span>Qty: ${order.quantity}</span>
+                                        <span>•</span>
+                                        <span>${order.date}</span>
+                                        <span>•</span>
+                                        <span class="order-price">₹${(order.amount * EXCHANGE_RATE).toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="order-actions">
+                                <div class="status-badge ${order.status}">
+                                    <i class="fas ${config.icon}"></i>
+                                    <span>${config.label}</span>
+                                </div>
+                                ${statusSelector}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Update order status
+        function updateOrderStatus(orderId, newStatus) {
+            const orderIndex = orders.findIndex(o => o.id === orderId);
+            if (orderIndex !== -1) {
+                orders[orderIndex].status = newStatus;
+                localStorage.setItem('allOrders', JSON.stringify(orders));
+                updateStats();
+                renderOrders(getFilteredOrders());
+            }
+        }
+
+        // Get filtered orders
+        function getFilteredOrders() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            return orders.filter(order => {
+                const matchesSearch = order.customer.toLowerCase().includes(searchTerm) ||
+                                      order.product.toLowerCase().includes(searchTerm) ||
+                                      order.id.toLowerCase().includes(searchTerm);
+                const matchesFilter = currentFilter === 'all' || order.status === currentFilter;
+                return matchesSearch && matchesFilter;
+            });
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', () => {
+            renderOrders(getFilteredOrders());
+        });
+
+        // Initial render
+        updateStats();
+        renderOrders(getFilteredOrders());
+    </script>
+</body>
+</html>
