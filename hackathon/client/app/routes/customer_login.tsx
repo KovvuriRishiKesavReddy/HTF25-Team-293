@@ -7,7 +7,7 @@ import { jwtDecode } from "jwt-decode";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
-// import { getUser } from "~/redux/actions";
+import { getUser } from "~/redux/actions";
 
 // Corrected Material-UI Icon Imports
 import Email from "@mui/icons-material/Email";
@@ -47,7 +47,7 @@ export default function Login() {
 
     try {
       const res = await axios.post(
-        `${import.meta.env.VITE_SERVER_URL}/api/user/login`,
+        `http://localhost:5000/api/customer/login`,
         {
           email,
           password,
@@ -62,12 +62,14 @@ export default function Login() {
         setEmail("");
         setPassword("");
         localStorage.setItem("userId", res?.data?.user?._id);
-        // dispatch(getUser(res?.data?.user?._id)); // Uncomment when getUser is ready
+        dispatch(getUser(res?.data?.user?._id)); // Uncomment when getUser is ready
 
-        const redirectPath =
-          localStorage.getItem("redirectPath") || "/dashboard";
-        navigate(redirectPath);
-        localStorage.removeItem("redirectPath");
+        // const redirectPath =
+        //   localStorage.getItem("redirectPath") || "/dashboard";
+        // navigate(redirectPath);
+        // localStorage.removeItem("redirectPath");
+
+        navigate("/customer_dashboard");
       }
     } catch (error: any) {
       console.log(error);
@@ -93,7 +95,7 @@ export default function Login() {
     try {
       const googleCreds: any = jwtDecode(credentialResponse.credential);
       const res = await axios.post(
-        `${import.meta.env.VITE_SERVER_URL}/api/user/googleauth`,
+        `http://localhost:5000/api/customer/googleauth`,
         {
           name: googleCreds?.name,
           email: googleCreds?.email,
@@ -110,12 +112,14 @@ export default function Login() {
         setEmail("");
         setPassword("");
         localStorage.setItem("userId", res?.data?.user?._id);
-        // dispatch(getUser(res?.data?.user?._id)); // Uncomment when getUser is ready
+        dispatch(getUser(res?.data?.user?._id)); // Uncomment when getUser is ready
 
-        const redirectPath =
-          localStorage.getItem("redirectPath") || "/dashboard";
-        navigate(redirectPath);
-        localStorage.removeItem("redirectPath");
+        // const redirectPath =
+        //   localStorage.getItem("redirectPath") || "/dashboard";
+        // navigate(redirectPath);
+        // localStorage.removeItem("redirectPath");
+
+        navigate("/customer_dashboard");
       }
     } catch (error: any) {
       console.log(error);

@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react"; // Added useRef and useEffect
 import { Link, useNavigate } from "react-router-dom";
 import CircularProgress from "@mui/material/CircularProgress";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { useDispatch } from "react-redux";
+import { Dialog, DialogContent } from "@mui/material"; // Added Dialog
 
 // Icons for the form
 import Person from "@mui/icons-material/Person";
@@ -14,10 +15,14 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import Phone from "@mui/icons-material/Phone";
 import Store from "@mui/icons-material/Store";
-import Business from "@mui/icons-material/Business"; // Re-using for Address
+import Business from "@mui/icons-material/Business";
 import Category from "@mui/icons-material/Category";
-import FileUpload from "@mui/icons-material/FileUpload";
 import CheckCircle from "@mui/icons-material/CheckCircle";
+// --- New Icons for file upload ---
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import CloseIcon from "@mui/icons-material/Close";
+import { getVendor } from "~/redux/actions";
 
 export default function VendorSignup() {
   // Personal Info
@@ -30,10 +35,17 @@ export default function VendorSignup() {
   // Shop Info
   const [shopName, setShopName] = useState("");
   const [shopCategory, setShopCategory] = useState("");
-  const [shopAddress, setShopAddress] = useState(""); // Simplified Address
+  const [shopAddress, setShopAddress] = useState("");
 
   // Files
-  const [shopLogo, setShopLogo] = useState<File | null>(null); // Optional
+  const [shopLogo, setShopLogo] = useState<File | null>(null);
+
+  // --- New UI State for File Upload ---
+  const [isDragging, setIsDragging] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  // --- End New UI State ---
 
   // UI State
   const [error, setError] = useState("");
@@ -52,14 +64,83 @@ export default function VendorSignup() {
     show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 100 } },
   };
 
-  const handleFileChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    setter: React.Dispatch<React.SetStateAction<File | null>>
-  ) => {
+  // --- New File Handlers (Adapted from your example) ---
+
+  // Handles file selection from button click
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setter(e.target.files[0]);
+      const file = e.target.files[0];
+      if (file.type.startsWith("image/")) {
+        setShopLogo(file); // Store the File object
+        if (previewUrl) URL.revokeObjectURL(previewUrl); // Clean up old preview
+        setPreviewUrl(URL.createObjectURL(file));
+        toast.success(`${file.name} selected!`);
+        setError("");
+      } else {
+        setError("Only image files are allowed.");
+        toast.error("Only image files are allowed.");
+      }
     }
   };
+
+  // Drag and drop handlers
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith("image/")) {
+        setShopLogo(file); // Store the File object
+        if (previewUrl) URL.revokeObjectURL(previewUrl); // Clean up old preview
+        setPreviewUrl(URL.createObjectURL(file));
+        toast.success(`${file.name} dropped!`);
+        setError("");
+      } else {
+        setError("Only image files are allowed.");
+        toast.error("Only image files are allowed.");
+      }
+    }
+  };
+
+  // Opens the preview dialog
+  const viewLogoPreview = () => {
+    if (shopLogo && previewUrl) {
+      setIsPreviewOpen(true);
+    } else {
+      toast.error("No logo uploaded to preview.");
+    }
+  };
+
+  // Cleanup the object URL on unmount
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  // --- Convert File to Base64 ---
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  // --- End New File Handlers ---
 
   const handleSignup = async () => {
     setError("");
@@ -74,7 +155,7 @@ export default function VendorSignup() {
       !confirmPassword ||
       !shopName ||
       !shopCategory ||
-      !shopAddress 
+      !shopAddress
     ) {
       const msg = "Please fill in all required fields.";
       setError(msg);
@@ -97,29 +178,40 @@ export default function VendorSignup() {
 
     setLoading(true);
 
-    // Use FormData to send text and files
-    const formData = new FormData();
-    // Personal
-    formData.append("name", name);
-    formData.append("email", email);
-    formData.append("phone", phone);
-    formData.append("password", password);
-    // Shop
-    formData.append("shopName", shopName);
-    formData.append("shopCategory", shopCategory);
-    formData.append("shopAddress", shopAddress); // Simplified address field
-
-    // Optional fields
-    if (shopLogo) formData.append("shopLogo", shopLogo);
-
     try {
+      // Convert logo to base64 if present
+      let logoBase64 = null;
+      if (shopLogo) {
+        try {
+          logoBase64 = await convertToBase64(shopLogo);
+          // Remove data:image/...;base64, prefix if needed, but backend can handle full
+        } catch (convError) {
+          console.error("Error converting to base64:", convError);
+          toast.error("Failed to process logo. Proceeding without it.");
+        }
+      }
+
+      // Send as JSON
+      const payload = {
+        name,
+        email,
+        phone,
+        password,
+        shopName,
+        shopCategory,
+        shopAddress,
+        shopLogo: logoBase64, // Full base64 string
+      };
+
+      console.log("Signup payload:", payload);
+
       // Assumed vendor signup route
       const res = await axios.post(
-        `${import.meta.env.VITE_SERVER_URL}/api/vendor/signup`,
-        formData,
+        `http://localhost:5000/api/vendor/signup`,
+        payload, // JSON payload
         {
           headers: {
-            "Content-Type": "multipart/form-data",
+            "Content-Type": "application/json",
           },
         }
       );
@@ -127,10 +219,17 @@ export default function VendorSignup() {
       console.log("Vendor signup response:", res);
 
       if (res.status === 201) {
-        const msg = "Application submitted! You will be notified upon approval.";
+        const msg =
+         "Application submitted! You will be notified upon approval.";
         setSuccess(msg);
         toast.success(msg);
-        setIsSubmitted(true); // Show success message instead of form
+        setIsSubmitted(true);
+
+        localStorage.setItem("vendorId", res?.data?.vendor?._id);
+        dispatch(getVendor(res?.data?.vendor?._id)); 
+
+        navigate("/vendor_pending")
+        // Show success message instead of form
       }
     } catch (error: any) {
       console.log(error);
@@ -160,9 +259,8 @@ export default function VendorSignup() {
       </AnimatePresence>
       <div className="w-full max-w-6xl bg-white shadow-2xl rounded-2xl overflow-hidden flex flex-col md:flex-row transform transition-all duration-300 hover:shadow-3xl">
         <div className="w-full md:w-1/2 p-4 sm:p-6 md:p-8 lg:p-10 flex flex-col bg-white overflow-y-auto max-h-[100vh] pt-4 md:pt-0">
-          
           {isSubmitted ? (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               className="text-center"
@@ -170,9 +268,7 @@ export default function VendorSignup() {
               <h2 className="text-3xl font-extrabold text-gray-900 mb-4">
                 Application Received!
               </h2>
-              <p className="text-lg text-gray-600 mb-6">
-                {success}
-              </p>
+              <p className="text-lg text-gray-600 mb-6">{success}</p>
               <p className="text-gray-500">
                 Our team will review your details. You can close this page.
               </p>
@@ -199,7 +295,7 @@ export default function VendorSignup() {
               >
                 Apply to become a seller on E-Shop.
               </motion.p>
-              
+
               <AnimatePresence>
                 {error && (
                   <motion.div
@@ -221,81 +317,191 @@ export default function VendorSignup() {
                 animate={{ opacity: 1 }}
               >
                 {/* --- Personal Info --- */}
-                <h3 className="text-xl font-semibold text-gray-800 border-b pb-2">Personal Info (Owner)</h3>
+                <h3 className="text-xl font-semibold text-gray-800 border-b pb-2">
+                  Personal Info (Owner)
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                  {/* Name */}
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1.5">Full Name *</label>
+                    <label
+                      htmlFor="name"
+                      className="block text-sm font-medium text-gray-700 mb-1.5"
+                    >
+                      Full Name *
+                    </label>
                     <div className="relative">
-                      <input type="text" id="name" required value={name} onChange={(e) => setName(e.target.value)} disabled={loading}
+                      <input
+                        type="text"
+                        id="name"
+                        required
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        disabled={loading}
                         className="w-full pl-10 pr-4 py-3 border text-black border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-400 focus:border-purple-500 bg-gray-50"
-                        placeholder="John Doe" />
+                        placeholder="John Doe"
+                      />
                       <Person className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                     </div>
                   </div>
+                  {/* Email */}
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">Email *</label>
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-medium text-gray-700 mb-1.5"
+                    >
+                      Email *
+                    </label>
                     <div className="relative">
-                      <input type="email" id="email" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading}
+                      <input
+                        type="email"
+                        id="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        disabled={loading}
                         className="w-full pl-10 pr-4 py-3 border text-black border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-400 focus:border-purple-500 bg-gray-50"
-                        placeholder="you@example.com" />
+                        placeholder="you@example.com"
+                      />
                       <Email className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                     </div>
                   </div>
+                  {/* Phone */}
                   <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1.5">Phone Number *</label>
+                    <label
+                      htmlFor="phone"
+                      className="block text-sm font-medium text-gray-700 mb-1.5"
+                    >
+                      Phone Number *
+                    </label>
                     <div className="relative">
-                      <input type="tel" id="phone" required value={phone} onChange={(e) => setPhone(e.target.value)} disabled={loading}
+                      <input
+                        type="tel"
+                        id="phone"
+                        required
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        disabled={loading}
                         className="w-full pl-10 pr-4 py-3 border text-black border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-400 focus:border-purple-500 bg-gray-50"
-                        placeholder="+1 555-123-4567" />
+                        placeholder="+1 555-123-4567"
+                      />
                       <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                     </div>
                   </div>
-                  {/* Password fields remain the same */}
+                  {/* Password */}
                   <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">Password *</label>
+                    <label
+                      htmlFor="password"
+                      className="block text-sm font-medium text-gray-700 mb-1.5"
+                    >
+                      Password *
+                    </label>
                     <div className="relative">
-                      <input type={showPassword ? "text" : "password"} id="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading}
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        id="password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={loading}
                         className="w-full pl-10 pr-10 py-3 border text-black border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-400 focus:border-purple-500 bg-gray-50"
-                        placeholder="Min. 8 characters" />
+                        placeholder="Min. 8 characters"
+                      />
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                        {showPassword ? <VisibilityOff className="h-5 w-5" /> : <Visibility className="h-5 w-5" />}
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                      >
+                        {showPassword ? (
+                          <VisibilityOff className="h-5 w-5" />
+                        ) : (
+                          <Visibility className="h-5 w-5" />
+                        )}
                       </button>
                     </div>
                   </div>
+                  {/* Confirm Password */}
                   <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1.5">Confirm Password *</label>
+                    <label
+                      htmlFor="confirmPassword"
+                      className="block text-sm font-medium text-gray-700 mb-1.5"
+                    >
+                      Confirm Password *
+                    </label>
                     <div className="relative">
-                      <input type={showCPassword ? "text" : "password"} id="confirmPassword" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={loading}
+                      <input
+                        type={showCPassword ? "text" : "password"}
+                        id="confirmPassword"
+                        required
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        disabled={loading}
                         className="w-full pl-10 pr-10 py-3 border text-black border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-400 focus:border-purple-500 bg-gray-50"
-                        placeholder="••••••••" />
+                        placeholder="••••••••"
+                      />
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                      <button type="button" onClick={() => setShowCPassword(!showCPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                        {showCPassword ? <VisibilityOff className="h-5 w-5" /> : <Visibility className="h-5 w-5" />}
+                      <button
+                        type="button"
+                        onClick={() => setShowCPassword(!showCPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                      >
+                        {showCPassword ? (
+                          <VisibilityOff className="h-5 w-5" />
+                        ) : (
+                          <Visibility className="h-5 w-5" />
+                        )}
                       </button>
                     </div>
                   </div>
                 </div>
 
                 {/* --- Shop Info --- */}
-                <h3 className="text-xl font-semibold text-gray-800 border-b pb-2 pt-4">Shop Info</h3>
+                <h3 className="text-xl font-semibold text-gray-800 border-b pb-2 pt-4">
+                  Shop Info
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                  {/* Shop Name */}
                   <div>
-                    <label htmlFor="shopName" className="block text-sm font-medium text-gray-700 mb-1.5">Shop Name *</label>
+                    <label
+                      htmlFor="shopName"
+                      className="block text-sm font-medium text-gray-700 mb-1.5"
+                    >
+                      Shop Name *
+                    </label>
                     <div className="relative">
-                      <input type="text" id="shopName" required value={shopName} onChange={(e) => setShopName(e.target.value)} disabled={loading}
+                      <input
+                        type="text"
+                        id="shopName"
+                        required
+                        value={shopName}
+                        onChange={(e) => setShopName(e.target.value)}
+                        disabled={loading}
                         className="w-full pl-10 pr-4 py-3 border text-black border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-400 focus:border-purple-500 bg-gray-50"
-                        placeholder="My Awesome Store" />
+                        placeholder="My Awesome Store"
+                      />
                       <Store className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                     </div>
                   </div>
+                  {/* Shop Category */}
                   <div>
-                    <label htmlFor="shopCategory" className="block text-sm font-medium text-gray-700 mb-1.5">Shop Category *</label>
+                    <label
+                      htmlFor="shopCategory"
+                      className="block text-sm font-medium text-gray-700 mb-1.5"
+                    >
+                      Shop Category *
+                    </label>
                     <div className="relative">
-                      <select id="shopCategory" required value={shopCategory} onChange={(e) => setShopCategory(e.target.value)} disabled={loading}
+                      <select
+                        id="shopCategory"
+                        required
+                        value={shopCategory}
+                        onChange={(e) => setShopCategory(e.target.value)}
+                        disabled={loading}
                         className="w-full pl-10 pr-4 py-3 border text-black border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-400 focus:border-purple-500 bg-gray-50 appearance-none"
                       >
-                        <option value="" disabled>Select a category</option>
+                        <option value="" disabled>
+                          Select a category
+                        </option>
                         <option value="electronics">Electronics</option>
                         <option value="clothing">Clothing & Fashion</option>
                         <option value="grocery">Grocery</option>
@@ -304,28 +510,94 @@ export default function VendorSignup() {
                         <option value="other">Other</option>
                       </select>
                       <Category className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                       <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">▼</span> {/* Dropdown arrow */}
+                      <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+                        ▼
+                      </span>
                     </div>
                   </div>
-                  {/* Simplified Single Address Field */}
+                  {/* Shop Address */}
                   <div className="md:col-span-2">
-                    <label htmlFor="shopAddress" className="block text-sm font-medium text-gray-700 mb-1.5">Shop Address *</label>
+                    <label
+                      htmlFor="shopAddress"
+                      className="block text-sm font-medium text-gray-700 mb-1.5"
+                    >
+                      Shop Address *
+                    </label>
                     <div className="relative">
-                      <input type="text" id="shopAddress" required value={shopAddress} onChange={(e) => setShopAddress(e.target.value)} disabled={loading}
+                      <input
+                        type="text"
+                        id="shopAddress"
+                        required
+                        value={shopAddress}
+                        onChange={(e) => setShopAddress(e.target.value)}
+                        disabled={loading}
                         className="w-full pl-10 pr-4 py-3 border text-black border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-400 focus:border-purple-500 bg-gray-50"
-                        placeholder="123 Main St, City, Country, Pincode" />
+                        placeholder="123 Main St, City, Country, Pincode"
+                      />
                       <Business className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                     </div>
                   </div>
-                  {/* Optional Shop Logo */}
-                  <div className="md:col-span-2"> 
-                    <label htmlFor="shopLogo" className="block text-sm font-medium text-gray-700 mb-1.5">Shop Logo (Optional)</label>
-                    <label className="w-full flex items-center px-4 py-3 border border-gray-200 rounded-lg shadow-sm bg-gray-50 hover:bg-white cursor-pointer">
-                      <FileUpload className="h-5 w-5 text-gray-400" />
-                      <span className="ml-2 text-sm text-gray-500 truncate">{shopLogo ? shopLogo.name : "Click to upload image"}</span>
-                      <input type="file" id="shopLogo" accept="image/*" onChange={(e) => handleFileChange(e, setShopLogo)} className="hidden" />
+
+                  {/* === NEW SHOP LOGO UPLOAD === */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Shop Logo (Optional)
                     </label>
+                    <motion.div
+                      className={`rounded-2xl p-6 text-center border-2 border-dashed transition-colors ${
+                        isDragging
+                          ? "border-purple-500 bg-purple-50"
+                          : "border-gray-300"
+                      }`}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                    >
+                      <CloudUploadIcon className="text-5xl text-gray-400 mb-3" />
+                      <h4 className="text-lg font-semibold text-gray-700 mb-2">
+                        Drop your logo here
+                      </h4>
+                      <p className="text-sm text-gray-500 mb-3">
+                        or click to browse
+                      </p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        ref={logoInputRef}
+                        onChange={handleLogoFileChange}
+                        className="hidden"
+                        id="shopLogo"
+                      />
+                      <div className="flex gap-3 justify-center">
+                        <button
+                          type="button" // Important! Prevents form submission
+                          onClick={() => logoInputRef.current?.click()}
+                          className="bg-purple-100 hover:bg-purple-200 text-purple-700 px-6 py-2 rounded-lg font-medium text-sm transition-all"
+                        >
+                          Choose Image
+                        </button>
+                        {shopLogo && (
+                          <button
+                            type="button"
+                            onClick={viewLogoPreview}
+                            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2"
+                          >
+                            <VisibilityIcon className="h-5 w-5" />
+                            Preview
+                          </button>
+                        )}
+                      </div>
+                      <div className="mt-3 text-xs text-gray-500">
+                        Supports: JPG, PNG, WebP up to 10MB
+                      </div>
+                      {shopLogo && (
+                        <div className="mt-3 text-sm text-green-600 font-medium">
+                          Uploaded: {shopLogo.name}
+                        </div>
+                      )}
+                    </motion.div>
                   </div>
+                  {/* === END NEW SHOP LOGO UPLOAD === */}
                 </div>
 
                 {/* --- Submit Button --- */}
@@ -341,7 +613,10 @@ export default function VendorSignup() {
                   >
                     {loading ? (
                       <>
-                        <CircularProgress size={20} className="mr-2 text-white" />
+                        <CircularProgress
+                          size={20}
+                          className="mr-2 text-white"
+                        />
                         Submitting Application...
                       </>
                     ) : (
@@ -350,7 +625,7 @@ export default function VendorSignup() {
                   </motion.button>
                 </div>
               </motion.div>
-              
+
               <motion.div
                 className="mt-6 text-center text-sm text-gray-600"
                 initial={{ opacity: 0, y: 10 }}
@@ -368,73 +643,116 @@ export default function VendorSignup() {
               </motion.div>
             </>
           )}
-
         </div>
-        
-        {/* === UPDATED RIGHT PANEL === */}
+
+        {/* === RIGHT PANEL === */}
         <div className="hidden md:block md:w-1/2 p-10 lg:p-12 bg-gradient-to-br from-purple-600 to-indigo-700 flex flex-col justify-center text-white relative overflow-hidden">
           <div className="absolute inset-0 bg-black/20"></div>
-          
-          <motion.h3 
-              className="relative text-3xl sm:text-4xl font-extrabold mb-6 drop-shadow-lg"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+
+          <motion.h3
+            className="relative text-3xl sm:text-4xl font-extrabold mb-6 drop-shadow-lg"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
           >
-              Become an E-Shop Partner
+            Become an E-Shop Partner
           </motion.h3>
-          
-          <motion.p 
-              className="relative text-lg leading-relaxed opacity-90 drop-shadow mb-8"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
+
+          <motion.p
+            className="relative text-lg leading-relaxed opacity-90 drop-shadow mb-8"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
           >
-              Complete this application to start selling on our marketplace.
+            Complete this application to start selling on our marketplace.
           </motion.p>
 
-          <motion.div 
-              className="relative space-y-4"
-              initial="hidden"
-              animate="show"
-              variants={{
-                  hidden: { opacity: 0 },
-                  show: { opacity: 1, transition: { staggerChildren: 0.2, delayChildren: 0.3 } }
-              }}
+          <motion.div
+            className="relative space-y-4"
+            initial="hidden"
+            animate="show"
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: { staggerChildren: 0.2, delayChildren: 0.3 },
+              },
+            }}
           >
-              <h4 className="text-xl font-semibold mb-3">Please provide:</h4>
-              
-              <motion.div className="flex items-start" variants={itemVariants}>
-                  <CheckCircle className="h-6 w-6 text-green-400 mr-3 flex-shrink-0 mt-1" />
-                  <span className="text-lg opacity-90">Full Name, Email, Password, Phone Number</span>
-              </motion.div>
-              
-              <motion.div className="flex items-start" variants={itemVariants}>
-                  <CheckCircle className="h-6 w-6 text-green-400 mr-3 flex-shrink-0 mt-1" />
-                  <span className="text-lg opacity-90">Shop Name, Category, Address</span>
-              </motion.div>
+            <h4 className="text-xl font-semibold mb-3">Please provide:</h4>
 
-              <motion.div className="flex items-start" variants={itemVariants}>
-                  <CheckCircle className="h-6 w-6 text-green-400 mr-3 flex-shrink-0 mt-1" />
-                  <span className="text-lg opacity-90">Shop Logo (Optional)</span>
-              </motion.div>
+            <motion.div className="flex items-start" variants={itemVariants}>
+              <CheckCircle className="h-6 w-6 text-green-400 mr-3 flex-shrink-0 mt-1" />
+              <span className="text-lg opacity-90">
+                Full Name, Email, Password, Phone Number
+              </span>
+            </motion.div>
+
+            <motion.div className="flex items-start" variants={itemVariants}>
+              <CheckCircle className="h-6 w-6 text-green-400 mr-3 flex-shrink-0 mt-1" />
+              <span className="text-lg opacity-90">
+                Shop Name, Category, Address
+              </span>
+            </motion.div>
+
+            <motion.div className="flex items-start" variants={itemVariants}>
+              <CheckCircle className="h-6 w-6 text-green-400 mr-3 flex-shrink-0 mt-1" />
+              <span className="text-lg opacity-90">Shop Logo (Optional)</span>
+            </motion.div>
           </motion.div>
 
-          <motion.div 
-              className="relative mt-10"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.2, duration: 0.5 }}
+          <motion.div
+            className="relative mt-10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2, duration: 0.5 }}
           >
-              <h4 className="text-xl font-semibold mb-3">Approval Process:</h4>
-              <p className="text-lg opacity-90 leading-relaxed">
-                  Once submitted, your application will be <strong className="font-semibold text-yellow-300">"Pending Review"</strong>. Our team will verify your details, and you'll receive an email notification upon approval.
-              </p>
+            <h4 className="text-xl font-semibold mb-3">Approval Process:</h4>
+            <p className="text-lg opacity-90 leading-relaxed">
+              Once submitted, your application will be{" "}
+              <strong className="font-semibold text-yellow-300">
+                "Pending Review"
+              </strong>
+              . Our team will verify your details, and you'll receive an email
+              notification upon approval.
+            </p>
           </motion.div>
         </div>
-        {/* === END OF NEW RIGHT PANEL === */}
-
+        {/* === END OF RIGHT PANEL === */}
       </div>
+
+      {/* --- Logo Preview Dialog --- */}
+      <AnimatePresence>
+        {isPreviewOpen && (
+          <Dialog
+            open={isPreviewOpen}
+            onClose={() => setIsPreviewOpen(false)}
+            maxWidth="md"
+            fullWidth
+            PaperProps={{
+              style: {
+                borderRadius: "1rem",
+                backgroundColor: "rgba(255, 255, 255, 0.9)",
+                backdropFilter: "blur(10px)",
+              },
+            }}
+          >
+            <DialogContent style={{ position: "relative", padding: "1rem" }}>
+              <button
+                onClick={() => setIsPreviewOpen(false)}
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 transition-all z-10"
+              >
+                <CloseIcon />
+              </button>
+              <img
+                src={previewUrl || ""}
+                alt="Shop Logo Preview"
+                className="w-full h-auto max-h-[70vh] rounded-lg object-contain"
+              />
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

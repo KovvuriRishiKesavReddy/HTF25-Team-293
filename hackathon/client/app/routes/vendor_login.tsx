@@ -14,6 +14,7 @@ import Email from "@mui/icons-material/Email";
 import Lock from "@mui/icons-material/Lock";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import { getVendor } from "~/redux/actions";
 
 export default function VendorLogin() {
   const [email, setEmail] = useState("");
@@ -48,7 +49,7 @@ export default function VendorLogin() {
     try {
       // Assumed vendor-specific login route
       const res = await axios.post(
-        `${import.meta.env.VITE_SERVER_URL}/api/vendor/login`,
+        `http://localhost:5000/api/vendor/login`,
         {
           email,
           password,
@@ -63,12 +64,15 @@ export default function VendorLogin() {
         setEmail("");
         setPassword("");
         localStorage.setItem("vendorId", res?.data?.vendor?._id);
-        // dispatch(getVendor(res?.data?.vendor?._id));
+        dispatch(getVendor(res?.data?.vendor?._id));
 
-        const redirectPath =
-          localStorage.getItem("redirectPath") || "/vendor/dashboard";
-        navigate(redirectPath);
-        localStorage.removeItem("redirectPath");
+        if(res?.data?.vendor?.status === 'Pending'){
+          navigate("/vendor_pending");
+        } else if(res?.data?.vendor?.status === 'Approved'){
+          navigate("/vendor_dashboard");
+        } else if(res?.data?.vendor?.status === 'Rejected'){
+          navigate("/vendor_pending"); // You can create a rejected page later
+        }
       }
     } catch (error: any) {
       console.log(error);

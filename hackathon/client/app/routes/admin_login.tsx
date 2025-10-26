@@ -48,7 +48,7 @@ export default function AdminLogin() {
     try {
       // Dedicated Admin login route
       const res = await axios.post(
-        `${import.meta.env.VITE_SERVER_URL}/api/admin/login`,
+        `http://localhost:5000/api/admin/login`,
         {
           email,
           password,
@@ -63,12 +63,14 @@ export default function AdminLogin() {
         setEmail("");
         setPassword("");
         localStorage.setItem("adminId", res?.data?.admin?._id);
+        dispatch({ type: "ADMIN", payload: res?.data?.admin });
         // dispatch(getAdmin(res?.data?.admin?._id));
 
-        const redirectPath =
-          localStorage.getItem("redirectPath") || "/admin/dashboard";
-        navigate(redirectPath);
-        localStorage.removeItem("redirectPath");
+        // const redirectPath =
+        //   localStorage.getItem("redirectPath") || "/admin/dashboard";
+        // navigate(redirectPath);
+        // localStorage.removeItem("redirectPath");
+        navigate("/admin_dashboard");
       }
     } catch (error: any) {
       console.log(error);
