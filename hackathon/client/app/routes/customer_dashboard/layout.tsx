@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Dashboard, 
   ShoppingBag,
   Person, 
-  FavoriteBorder, // For Wishlist
+  FavoriteBorder,
   Search, 
   Menu, 
   Close, 
@@ -23,23 +23,32 @@ export default function CustomerDashboardLayout() {
   const dispatch = useDispatch();
 
   const customer = useSelector((state: any) => state.reducer.currentUser);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const userId = localStorage.getItem("userId");
     if (userId) {
-      dispatch(getUser(userId));
+      dispatch(getUser(userId)).finally(() => setIsLoading(false));
     } else {
-      navigate("/");
+      navigate("/customer_login");
     }
-  }, [customer]);
-
-
-  console.log("Customer Data in Layout:", customer);
+  }, [dispatch, navigate]); // Fixed dependency
 
   const handleLogout = () => {
     localStorage.removeItem("userId");
+    dispatch({ type: 'LOGOUT_USER' }); // Clear Redux state if action exists
     navigate("/customer_login");
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <motion.div initial={{ rotate: 0 }} animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
+          <ShoppingCart className="text-6xl text-blue-600" />
+        </motion.div>
+      </div>
+    );
+  }
 
   const navLinks = [
     { name: "Dashboard", href: "/customer_dashboard", icon: <Dashboard fontSize="small" /> },
@@ -52,13 +61,13 @@ export default function CustomerDashboardLayout() {
   const getLinkClasses = (href: string) => {
     const isActive = location.pathname === href;
     return isActive
-      ? "bg-blue-600 text-white shadow-lg" 
+      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg" 
       : "text-blue-200 hover:bg-blue-700 hover:text-white";
   };
 
   const SidebarContent = ({ isMobile = false }) => (
     <>
-      <div className="flex items-center justify-between h-16 px-4 border-b border-blue-700">
+      <div className="flex items-center justify-between h-16 px-4 border-b border-blue-700 bg-gradient-to-r from-blue-900 to-indigo-900">
         <Link to="/" className="flex items-center gap-2 text-white">
           <Storefront className="text-blue-300" />
           <span className="text-xl font-bold tracking-tight">E-Shop</span>
@@ -75,26 +84,29 @@ export default function CustomerDashboardLayout() {
       
       <nav className="flex-1 p-3 space-y-2">
         {navLinks.map((link) => (
-          <Link
-            key={link.name}
-            to={link.href}
-            onClick={isMobile ? () => setIsSidebarOpen(false) : undefined}
-            className={`flex items-center space-x-3 p-2.5 rounded-xl transition-all duration-300 ${getLinkClasses(link.href)}`}
-          >
-            {link.icon}
-            <span className="font-medium text-sm">{link.name}</span>
-          </Link>
+          <motion.div key={link.name} whileHover={{ x: 4 }}>
+            <Link
+              to={link.href}
+              onClick={isMobile ? () => setIsSidebarOpen(false) : undefined}
+              className={`flex items-center space-x-3 p-2.5 rounded-xl transition-all duration-300 ${getLinkClasses(link.href)}`}
+            >
+              {link.icon}
+              <span className="font-medium text-sm">{link.name}</span>
+            </Link>
+          </motion.div>
         ))}
       </nav>
       
       <div className="p-3 border-t border-blue-700">
-        <button
+        <motion.button
           onClick={handleLogout}
-          className="flex w-full items-center space-x-3 p-2.5 rounded-xl text-blue-200 hover:bg-red-500 hover:text-white transition-all duration-300"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="flex w-full items-center space-x-3 p-2.5 rounded-xl text-red-200 hover:bg-red-500 hover:text-white transition-all duration-300"
         >
           <Logout fontSize="small" />
           <span className="font-medium text-sm">Logout</span>
-        </button>
+        </motion.button>
       </div>
     </>
   );
@@ -102,7 +114,7 @@ export default function CustomerDashboardLayout() {
   return (
     <div className="flex h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       
-      <aside className="hidden md:flex w-64 h-screen bg-blue-900 text-white flex-col flex-shrink-0 shadow-2xl">
+      <aside className="hidden md:flex w-64 h-screen bg-gradient-to-b from-blue-900 to-indigo-900 text-white flex-col flex-shrink-0 shadow-2xl">
         <SidebarContent />
       </aside>
 
@@ -117,7 +129,7 @@ export default function CustomerDashboardLayout() {
               onClick={() => setIsSidebarOpen(false)}
             />
             <motion.aside 
-              className="w-64 h-screen bg-blue-900 text-white flex-col fixed inset-y-0 left-0 z-30 md:hidden shadow-2xl"
+              className="w-64 h-screen bg-gradient-to-b from-blue-900 to-indigo-900 text-white flex-col fixed inset-y-0 left-0 z-30 md:hidden shadow-2xl"
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
@@ -131,11 +143,11 @@ export default function CustomerDashboardLayout() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         
-        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-blue-200 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10 shadow-lg">
+        <header className="h-16 bg-white/90 backdrop-blur-md border-b border-blue-200 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10 shadow-lg">
           <div className="flex items-center">
             <button 
               onClick={() => setIsSidebarOpen(true)} 
-              className="md:hidden text-blue-600 mr-4 hover:text-blue-800"
+              className="md:hidden text-blue-600 mr-4 hover:text-blue-800 p-2 rounded-lg transition-colors"
             >
               <Menu />
             </button>
@@ -151,11 +163,14 @@ export default function CustomerDashboardLayout() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 p-2 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors">
+            <motion.div 
+              className="flex items-center space-x-2 p-2 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors"
+              whileHover={{ scale: 1.05 }}
+            >
               <span className="text-sm font-semibold text-blue-800">
                 Welcome, {customer?.name || "Guest"}!
               </span>
-            </div>
+            </motion.div>
             <Link to="/customer_dashboard/profile" className="flex items-center space-x-2 p-2 rounded-full transition-all duration-300 hover:bg-blue-100">
               <img
                 src={customer?.picture || "https://res.cloudinary.com/doxykd1yk/image/upload/v1751733473/download_ywnnsj.png"}
