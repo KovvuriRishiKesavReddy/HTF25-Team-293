@@ -103,7 +103,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            text-decoration: none; /* Added for the 'a' tag */
+            text-decoration: none;
         }
 
         .nav-tab:hover {
@@ -161,25 +161,10 @@
             border-width: 2px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
         }
-        /* ... (add this with your other .stat-card styles) ... */
+
         .stat-card.returned .stat-card-info h3 { color: #dc2626; }
         .stat-card.returned .stat-icon { background: #ef4444; }
         .stat-card.returned.active { border-color: #dc2626; background: #ffebeb; }
-
-        /* ... (add this with your other .status-badge styles) ... */
-        .status-badge.returned {
-            background: #ffebeb;
-            border-color: #fca5a5;
-            color: #dc2626;
-        }
-
-        /* ... (add this with your other .order-card styles) ... */
-        /* This adds colored borders based on status */
-        .order-card.pending { border-left-color: #f59e0b; }
-        .order-card.processing { border-left-color: #3b82f6; }
-        .order-card.out_for_delivery { border-left-color: #a855f7; }
-        .order-card.delivered { border-left-color: #10b981; }
-        .order-card.returned { border-left-color: #ef4444; }
 
         .stat-card-content {
             display: flex;
@@ -288,6 +273,12 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
+        .order-card.pending { border-left-color: #f59e0b; }
+        .order-card.processing { border-left-color: #3b82f6; }
+        .order-card.out_for_delivery { border-left-color: #a855f7; }
+        .order-card.delivered { border-left-color: #10b981; }
+        .order-card.returned { border-left-color: #ef4444; }
+
         .order-content {
             display: flex;
             justify-content: space-between;
@@ -361,7 +352,6 @@
             font-size: 18px;
         }
         
-        /* Style for returned order price */
         .order-card.returned .order-price {
             color: #dc2626;
             text-decoration: line-through;
@@ -407,6 +397,12 @@
             background: #ecfdf5;
             border-color: #86efac;
             color: #059669;
+        }
+
+        .status-badge.returned {
+            background: #ffebeb;
+            border-color: #fca5a5;
+            color: #dc2626;
         }
 
         .status-selector {
@@ -636,102 +632,10 @@
     </div>
 
     <script>
-        // Orders data
-        let orders = [
-            {
-                id: 'ORD-2024-001',
-                customer: 'Sarah Johnson',
-                product: 'Wireless Bluetooth Headphones',
-                quantity: 2,
-                amount: 159.98,
-                date: '2024-10-24',
-                status: 'pending',
-                avatar: 'SJ'
-            },
-            {
-                id: 'ORD-2024-002',
-                customer: 'Michael Chen',
-                product: 'Smart Fitness Watch',
-                quantity: 1,
-                amount: 299.99,
-                date: '2024-10-24',
-                status: 'processing',
-                avatar: 'MC'
-            },
-            {
-                id: 'ORD-2024-003',
-                customer: 'Emily Rodriguez',
-                product: 'USB-C Charging Cable (3-Pack)',
-                quantity: 1,
-                amount: 24.99,
-                date: '2024-10-23',
-                status: 'out_for_delivery',
-                avatar: 'ER'
-            },
-            {
-                id: 'ORD-2024-004',
-                customer: 'David Kim',
-                product: 'Portable Power Bank 20000mAh',
-                quantity: 3,
-                amount: 149.97,
-                date: '2024-10-23',
-                status: 'delivered',
-                avatar: 'DK'
-            },
-            {
-                id: 'ORD-2024-005',
-                customer: 'Lisa Thompson',
-                product: 'Mechanical Gaming Keyboard',
-                quantity: 1,
-                amount: 129.99,
-                date: '2024-10-22',
-                status: 'pending',
-                avatar: 'LT'
-            },
-            {
-                id: 'ORD-2024-006',
-                customer: 'James Wilson',
-                product: 'Wireless Mouse - Ergonomic',
-                quantity: 2,
-                amount: 79.98,
-                date: '2024-10-22',
-                status: 'processing',
-                avatar: 'JW'
-            },
-            {
-                id: 'ORD-2024-007',
-                customer: 'Amanda Martinez',
-                product: 'Laptop Stand - Aluminum',
-                quantity: 1,
-                amount: 89.99,
-                date: '2024-10-22',
-                status: 'out_for_delivery',
-                avatar: 'AM'
-            },
-            {
-                id: 'ORD-2024-008',
-                customer: 'Robert Taylor',
-                product: 'Webcam HD 1080p',
-                quantity: 2,
-                amount: 119.98,
-                date: '2024-10-21',
-                status: 'delivered',
-                avatar: 'RT'
-            }
-        ];
+        // Orders data - Load from localStorage or use defaults
+        let orders = [];
         
-        let allOrdersData = JSON.parse(localStorage.getItem('allOrders'));
-        if (!allOrdersData) {
-            // On first run, store the default data
-            console.log("No data found, initializing localStorage...");
-            localStorage.setItem('allOrders', JSON.stringify(orders));
-        } else {
-            // On subsequent loads, use the stored data
-            console.log("Loading orders from localStorage...");
-            orders = allOrdersData;
-        }
-
-        // --- THIS WAS THE MISSING LINE ---
+        // EXCHANGE RATE
         const EXCHANGE_RATE = 83;
 
         const statusConfig = {
@@ -744,6 +648,46 @@
 
         let currentFilter = 'all';
 
+        // Initialize orders from localStorage
+        function initializeOrders() {
+            const storedOrders = localStorage.getItem('allOrders');
+            if (storedOrders) {
+                try {
+                    orders = JSON.parse(storedOrders);
+                } catch (e) {
+                    console.error('Error parsing stored orders:', e);
+                    orders = [];
+                }
+            }
+            
+            // If no orders exist, create some sample data
+            if (orders.length === 0) {
+                orders = [
+                    {
+                        id: 'ORD-2024-001',
+                        customer: 'Sarah Johnson',
+                        product: 'Wireless Bluetooth Headphones',
+                        quantity: 2,
+                        amount: 159.98,
+                        date: '2024-10-24',
+                        status: 'pending',
+                        avatar: 'SJ'
+                    },
+                    {
+                        id: 'ORD-2024-002',
+                        customer: 'Michael Chen',
+                        product: 'Smart Fitness Watch',
+                        quantity: 1,
+                        amount: 299.99,
+                        date: '2024-10-24',
+                        status: 'processing',
+                        avatar: 'MC'
+                    }
+                ];
+                localStorage.setItem('allOrders', JSON.stringify(orders));
+            }
+        }
+
         // Update stats
         function updateStats() {
             const stats = {
@@ -752,7 +696,7 @@
                 processing: orders.filter(o => o.status === 'processing').length,
                 outForDelivery: orders.filter(o => o.status === 'out_for_delivery').length,
                 delivered: orders.filter(o => o.status === 'delivered').length,
-                returned: orders.filter(o => o.status === 'returned').length // <-- FIXED: Added comma
+                returned: orders.filter(o => o.status === 'returned').length
             };
 
             const totalRevenue = orders
@@ -784,7 +728,6 @@
                 card.classList.remove('active');
             });
 
-            // Only try to activate a stat card if it exists
             const activeStatCard = document.querySelector(`.stat-card.${status}`);
             if (activeStatCard) {
                 activeStatCard.classList.add('active');
@@ -795,7 +738,6 @@
                 tab.classList.remove('active');
             });
 
-            // Find and activate the correct nav tab using data-status
             const activeTab = document.querySelector(`.nav-tab[data-status="${status}"]`);
             if (activeTab) {
                 activeTab.classList.add('active');
@@ -809,19 +751,16 @@
             const allStatuses = ['pending', 'processing', 'out_for_delivery', 'delivered'];
             const currentIndex = allStatuses.indexOf(currentStatus);
 
-            // If it's returned, no more options
             if (currentStatus === 'returned' || currentStatus === 'delivered') { 
                 return []; 
             }
             
-            // Can only move forward in the delivery process
             const options = allStatuses.slice(currentIndex);
             
-            // Add 'returned' as an option for any status except 'pending'
             if (currentStatus !== 'pending') {
                  options.push('returned');
             }
-            return [...new Set(options)]; // Use Set to avoid duplicates
+            return [...new Set(options)];
         }
 
         // Render orders
@@ -842,7 +781,6 @@
                 const config = statusConfig[order.status];
                 const statusOptions = getStatusOptions(order.status);
 
-                // --- FIXED: Hide dropdown if delivered OR returned ---
                 const statusSelector = (order.status !== 'delivered' && order.status !== 'returned') ? `
                     <div class="status-selector">
                         <select onchange="updateOrderStatus('${order.id}', this.value)" class="status-dropdown">
@@ -856,7 +794,6 @@
                     </div>
                 ` : '';
 
-                // --- FIXED: Added ${order.status} class for colored border ---
                 return `
                     <div class="order-card ${order.status}">
                         <div class="order-content">
@@ -890,14 +827,53 @@
             }).join('');
         }
 
-        // Update order status
+        // Update order status and sync with customer orders
         function updateOrderStatus(orderId, newStatus) {
             const orderIndex = orders.findIndex(o => o.id === orderId);
             if (orderIndex !== -1) {
                 orders[orderIndex].status = newStatus;
+                
+                // Save to localStorage
                 localStorage.setItem('allOrders', JSON.stringify(orders));
+                
+                // Update customer orders
+                syncWithCustomerOrders(orderId, newStatus);
+                
                 updateStats();
                 renderOrders(getFilteredOrders());
+            }
+        }
+
+        // Sync status changes with customer orders
+        function syncWithCustomerOrders(orderId, newStatus) {
+            const customerOrders = localStorage.getItem('orders');
+            if (customerOrders) {
+                try {
+                    let orders = JSON.parse(customerOrders);
+                    
+                    // Find matching order and update status
+                    orders = orders.map(order => {
+                        if (order.orderId === orderId) {
+                            // Map seller status to customer status
+                            let customerStatus = 'processing';
+                            
+                            if (newStatus === 'pending' || newStatus === 'processing') {
+                                customerStatus = 'processing';
+                            } else if (newStatus === 'out_for_delivery') {
+                                customerStatus = 'shipped';
+                            } else if (newStatus === 'delivered') {
+                                customerStatus = 'delivered';
+                            }
+                            
+                            return { ...order, status: customerStatus };
+                        }
+                        return order;
+                    });
+                    
+                    localStorage.setItem('orders', JSON.stringify(orders));
+                } catch (e) {
+                    console.error('Error syncing with customer orders:', e);
+                }
             }
         }
 
@@ -919,9 +895,37 @@
             renderOrders(getFilteredOrders());
         });
 
+        // Check for new orders from payment page
+        function checkForNewOrders() {
+            const newOrderData = localStorage.getItem('newOrderFromPayment');
+            if (newOrderData) {
+                try {
+                    const newOrder = JSON.parse(newOrderData);
+                    
+                    // Check if order already exists
+                    const existingOrder = orders.find(o => o.id === newOrder.id);
+                    if (!existingOrder) {
+                        orders.unshift(newOrder);
+                        localStorage.setItem('allOrders', JSON.stringify(orders));
+                        updateStats();
+                        renderOrders(getFilteredOrders());
+                    }
+                    
+                    // Remove the flag
+                    localStorage.removeItem('newOrderFromPayment');
+                } catch (e) {
+                    console.error('Error processing new order:', e);
+                }
+            }
+        }
+
         // Initial render
+        initializeOrders();
         updateStats();
         renderOrders(getFilteredOrders());
+        
+        // Check for new orders periodically
+        setInterval(checkForNewOrders, 2000);
     </script>
 </body>
 </html>

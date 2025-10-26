@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- ADDED: Simulate user and load state ---
+    // --- Simulate user and load state ---
     if (!localStorage.getItem('currentUser')) {
         localStorage.setItem('currentUser', JSON.stringify({
             firstName: 'ShopZone',
@@ -11,20 +11,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const getInitialState = (key, defaultValue) => {
         const storedValue = localStorage.getItem(key);
-        // Basic error handling for potentially invalid JSON
         try {
             return storedValue ? JSON.parse(storedValue) : defaultValue;
         } catch (e) {
             console.error(`Error parsing localStorage key "${key}":`, e);
-            localStorage.removeItem(key); // Clear invalid data
+            localStorage.removeItem(key);
             return defaultValue;
         }
     };
-    // ------------------------------------------
 
     // --- CONSTANTS (Data) ---
-    const PRODUCTS = [
-        // (Your existing product data remains unchanged)
+    const HARDCODED_PRODUCTS = [
       { id: 1, name: 'iPhone 15 Pro', category: 'mobiles', price: 129999, rating: 4.8, reviews: 2453, image: '📱', description: '256GB, Titanium Blue', stock: 15, discount: 10 },
       { id: 2, name: 'Samsung Galaxy S24', category: 'mobiles', price: 89999, rating: 4.6, reviews: 1876, image: '📱', description: '128GB, Phantom Black', stock: 20, discount: 15 },
       { id: 3, name: 'OnePlus 12', category: 'mobiles', price: 64999, rating: 4.5, reviews: 1234, image: '📱', description: '256GB, Glacial White', stock: 25, discount: 20 },
@@ -42,6 +39,15 @@ document.addEventListener('DOMContentLoaded', () => {
       { id: 15, name: 'Canon EOS R6', category: 'cameras', price: 234999, rating: 4.9, reviews: 234, image: '📷', description: 'Mirrorless, 20MP', stock: 6, discount: 5 },
       { id: 16, name: 'Sony A7 IV', category: 'cameras', price: 249999, rating: 4.9, reviews: 198, image: '📷', description: '33MP, 4K Video', stock: 5, discount: 6 },
     ];
+
+    // --- Load vendor products and merge with hardcoded products ---
+    const loadAllProducts = () => {
+        const vendorProducts = getInitialState('vendorProducts', []);
+        return [...HARDCODED_PRODUCTS, ...vendorProducts];
+    };
+
+    let PRODUCTS = loadAllProducts();
+
     const CATEGORIES = [
         { id: 'all', name: 'All Products', icon: '🛍️' },
         { id: 'mobiles', name: 'Mobiles', icon: '📱' },
@@ -51,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'tablets', name: 'Tablets', icon: '📱' },
         { id: 'cameras', name: 'Cameras', icon: '📷' },
     ];
+
     const ORDER_STATUSES = [
         { status: 'processing', label: 'Order Processing', icon: 'package', color: 'blue' },
         { status: 'shipped', label: 'Shipped', icon: 'truck', color: 'orange' },
@@ -64,14 +71,14 @@ document.addEventListener('DOMContentLoaded', () => {
         'name': 'Name: A to Z'
     };
 
-    // --- APPLICATION STATE (Loaded from localStorage) ---
+    // --- APPLICATION STATE ---
     let selectedCategory = 'all';
     let searchQuery = '';
     let sortBy = 'relevance';
     let cart = getInitialState('cart', []);
     let wishlist = getInitialState('wishlist', []);
     let orders = getInitialState('orders', []);
-    let view = 'products'; // Default, will be updated by redirect logic
+    let view = 'products';
     let showCategoryMenu = false;
     let showSortMenu = false;
 
@@ -87,17 +94,56 @@ document.addEventListener('DOMContentLoaded', () => {
     const ordersCountBadge = document.getElementById('orders-count-badge');
     const wishlistIcon = document.getElementById('wishlist-icon');
 
+    // --- NEW: Sync orders with seller dashboard ---
+    const syncOrdersWithSeller = () => {
+        // Get seller orders
+        const sellerOrders = getInitialState('allOrders', []);
+        
+        // Update customer orders based on seller order status
+        let ordersUpdated = false;
+        orders = orders.map(customerOrder => {
+            // Find matching seller order by orderId
+            const sellerOrder = sellerOrders.find(so => so.id === customerOrder.orderId);
+            
+            if (sellerOrder) {
+                // Map seller status to customer status
+                let newStatus = customerOrder.status;
+                
+                if (sellerOrder.status === 'pending' || sellerOrder.status === 'processing') {
+                    newStatus = 'processing';
+                } else if (sellerOrder.status === 'out_for_delivery') {
+                    newStatus = 'shipped';
+                } else if (sellerOrder.status === 'delivered') {
+                    newStatus = 'delivered';
+                }
+                
+                if (newStatus !== customerOrder.status) {
+                    ordersUpdated = true;
+                    return { ...customerOrder, status: newStatus };
+                }
+            }
+            return customerOrder;
+        });
+        
+        if (ordersUpdated) {
+            localStorage.setItem('orders', JSON.stringify(orders));
+        }
+    };
+
     // --- STATE MANAGEMENT & LOGIC FUNCTIONS ---
 
-    // --- ADDED: Function to save state ---
     const saveStateToLocalStorage = () => {
         localStorage.setItem('cart', JSON.stringify(cart));
         localStorage.setItem('wishlist', JSON.stringify(wishlist));
         localStorage.setItem('orders', JSON.stringify(orders));
     };
-    // ------------------------------------
+
+    const refreshProducts = () => {
+        PRODUCTS = loadAllProducts();
+    };
 
     const getFilteredAndSortedProducts = () => {
+        refreshProducts();
         let filtered = PRODUCTS;
 
         if (selectedCategory !== 'all') {
@@ -114,11 +160,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const sorted = [...filtered];
         switch (sortBy) {
             case 'price-low':
-                // Sort by discounted price
                 sorted.sort((a, b) => (a.price * (1 - a.discount / 100)) - (b.price * (1 - b.discount / 100)));
                 break;
             case 'price-high':
-                 // Sort by discounted price
                 sorted.sort((a, b) => (b.price * (1 - b.discount / 100)) - (a.price * (1 - a.discount / 100)));
                 break;
             case 'rating':
@@ -127,13 +171,14 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'name':
                 sorted.sort((a, b) => a.name.localeCompare(b.name));
                 break;
-            default: // 'relevance'
+            default:
                 break;
         }
         return sorted;
     };
 
     const addToCart = (productId) => {
+        refreshProducts();
         const product = PRODUCTS.find(p => p.id === productId);
         if (!product) return;
 
@@ -143,16 +188,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.id === productId ? { ...item, quantity: item.quantity + 1 } : item
             );
         } else {
-            // Add all product details to cart, including discount
             cart = [...cart, { ...product, quantity: 1 }];
         }
-        saveStateToLocalStorage(); // <-- Save state
+        saveStateToLocalStorage();
         renderApp();
     };
 
     const removeFromCart = (productId) => {
         cart = cart.filter(item => item.id !== productId);
-        saveStateToLocalStorage(); // <-- Save state
+        saveStateToLocalStorage();
         renderApp();
     };
 
@@ -160,17 +204,16 @@ document.addEventListener('DOMContentLoaded', () => {
         cart = cart.map(item => {
             if (item.id === productId) {
                 const newQuantity = item.quantity + change;
-                // Prevent quantity going below 1, remove if it reaches 0 (optional)
-                return newQuantity > 0 ? { ...item, quantity: newQuantity } : null; // Return null to filter out
+                return newQuantity > 0 ? { ...item, quantity: newQuantity } : null;
             }
             return item;
-        }).filter(item => item !== null); // Filter out items marked for removal
-        saveStateToLocalStorage(); // <-- Save state
+        }).filter(item => item !== null);
+        saveStateToLocalStorage();
         renderApp();
     };
 
-
     const toggleWishlist = (productId) => {
+        refreshProducts();
         const product = PRODUCTS.find(p => p.id === productId);
         if (!product) return;
 
@@ -180,37 +223,27 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             wishlist = [...wishlist, product];
         }
-        saveStateToLocalStorage(); // <-- Save state
+        saveStateToLocalStorage();
         renderApp();
     };
 
     const isInWishlist = (productId) => wishlist.some(item => item.id === productId);
 
-    // --- MODIFIED: Calculate total using discounted price ---
     const getCartTotal = () => cart.reduce((sum, item) => {
         const discountedPrice = item.price * (1 - (item.discount || 0) / 100);
         return sum + discountedPrice * item.quantity;
     }, 0);
-    // --------------------------------------------------------
 
     const getCartItemCount = () => cart.reduce((sum, item) => sum + item.quantity, 0);
 
-    // --- CORRECTED: handleCheckout now just redirects ---
     const handleCheckout = () => {
-        // Save the current state just in case
         saveStateToLocalStorage();
-
-        // Ensure user is logged in (optional, but good practice)
         if (!localStorage.getItem('currentUser')) {
              alert("Please log in to check out.");
-             // You would redirect to a login page here in a real app
              return;
         }
-
-        // Redirect to the new payment page
         window.location.href = 'payment.html';
     };
-    // ----------------------------------------------------
 
     const getCategoryName = (id) => CATEGORIES.find(c => c.id === id)?.name || 'All Products';
     const getSortName = (id) => SORT_OPTIONS[id] || 'Sort';
@@ -218,16 +251,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- RENDER FUNCTIONS ---
 
     const renderApp = () => {
-        // 1. Update view visibility
+        // Sync orders before rendering
+        syncOrdersWithSeller();
+        
         productsView.classList.toggle('hidden', view !== 'products');
         cartView.classList.toggle('hidden', view !== 'cart');
         wishlistView.classList.toggle('hidden', view !== 'wishlist');
         ordersView.classList.toggle('hidden', view !== 'orders');
 
-        // 2. Update header badges
         updateHeaderBadges();
 
-        // 3. Render content for the active view
         switch (view) {
             case 'products':
                 renderProductsView();
@@ -243,16 +276,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
         }
 
-        // 4. Activate Lucide icons
         lucide.createIcons();
     };
 
     const updateHeaderBadges = () => {
         const cartItemCount = getCartItemCount();
         const wishlistCount = wishlist.length;
-        // Correctly filter orders before accessing status
         const activeOrdersCount = orders ? orders.filter(o => o && o.status !== 'delivered').length : 0;
-
 
         if (cartItemCount > 0) {
             cartCountBadge.textContent = cartItemCount;
@@ -264,10 +294,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (wishlistCount > 0) {
             wishlistCountBadge.textContent = wishlistCount;
             wishlistCountBadge.classList.remove('hidden');
-            if (wishlistIcon) wishlistIcon.classList.add('filled'); // Check if icon exists
+            if (wishlistIcon) wishlistIcon.classList.add('filled');
         } else {
             wishlistCountBadge.classList.add('hidden');
-            if (wishlistIcon) wishlistIcon.classList.remove('filled'); // Check if icon exists
+            if (wishlistIcon) wishlistIcon.classList.remove('filled');
         }
 
         if (activeOrdersCount > 0) {
@@ -277,7 +307,6 @@ document.addEventListener('DOMContentLoaded', () => {
             ordersCountBadge.classList.add('hidden');
         }
     };
-
 
     const renderProductsView = () => {
         const products = getFilteredAndSortedProducts();
@@ -350,7 +379,6 @@ document.addEventListener('DOMContentLoaded', () => {
             gridHTML = `
                 <div class="product-grid">
                     ${products.map(product => {
-                        // Calculate discounted price here as well for consistency
                         const discountedPrice = product.price * (1 - (product.discount || 0) / 100);
                         const productInWishlist = isInWishlist(product.id);
                         return `
@@ -417,10 +445,9 @@ document.addEventListener('DOMContentLoaded', () => {
         productsView.innerHTML = headerHTML + gridHTML;
     };
 
-    // --- MODIFIED: Render Cart with Discounted Prices ---
     const renderCartView = () => {
         const cartItemCount = getCartItemCount();
-        const cartTotal = getCartTotal(); // Uses the modified getCartTotal function
+        const cartTotal = getCartTotal();
         let contentHTML = '';
 
         if (cart.length === 0) {
@@ -442,7 +469,6 @@ document.addEventListener('DOMContentLoaded', () => {
             contentHTML = `
                 <div class="cart-items-container">
                     ${cart.map(item => {
-                        // Calculate discounted price for each item
                         const discountedPrice = item.price * (1 - (item.discount || 0) / 100);
                         const itemTotalPrice = discountedPrice * item.quantity;
                         return `
@@ -510,7 +536,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
     };
-    // --------------------------------------------------------
 
     const renderWishlistView = () => {
         let contentHTML = '';
@@ -534,7 +559,6 @@ document.addEventListener('DOMContentLoaded', () => {
             contentHTML = `
                 <div class="wishlist-grid">
                     ${wishlist.map(product => {
-                         // Calculate discounted price for wishlist consistency
                          const discountedPrice = product.price * (1 - (product.discount || 0) / 100);
                          return `
                             <div class="wishlist-item">
@@ -583,7 +607,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderOrdersView = () => {
-        // Ensure orders is an array before filtering
          const safeOrders = Array.isArray(orders) ? orders : [];
          const activeOrders = safeOrders.filter(o => o && o.status !== 'delivered');
          const pastOrders = safeOrders.filter(o => o && o.status === 'delivered');
@@ -645,18 +668,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderOrderCard = (order, isActive) => {
-         // Add checks for potentially missing data
          if (!order || !order.status || !order.orderId || !order.items || typeof order.total === 'undefined') {
             console.warn("Skipping rendering invalid order:", order);
-            return ''; // Don't render if order data is incomplete
+            return '';
          }
         const statusInfo = ORDER_STATUSES.find(s => s.status === order.status) || ORDER_STATUSES[0];
 
-        // REMOVED the automatic progress bar rendering as requested
-        // const renderProgressBar = () => { ... };
-
         const renderOrderItems = (items) => (items || []).map(item => {
-             // Calculate discounted price for item display
              const discountedPrice = (item.price || 0) * (1 - (item.discount || 0) / 100);
              const itemTotalPrice = discountedPrice * (item.quantity || 1);
              return `
@@ -674,7 +692,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
             `}).join('');
-
 
         return `
             <div class="order-card">
@@ -723,7 +740,6 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     };
 
-
     // --- EVENT LISTENERS ---
     const setupEventListeners = () => {
         document.body.addEventListener('click', (event) => {
@@ -732,7 +748,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!actionTarget) return;
 
-            // Prevent default for actual <a> tags used as buttons
             if (actionTarget.tagName === 'A') {
                 event.preventDefault();
             }
@@ -741,10 +756,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             switch (action) {
                 case 'change-view':
-                    if (targetView === 'products' && actionTarget.classList.contains('logo')) { // Only reset for logo click
+                    if (targetView === 'products' && actionTarget.classList.contains('logo')) {
                         selectedCategory = 'all';
                         searchQuery = '';
-                        sortBy = 'relevance'; // Optionally reset sort
+                        sortBy = 'relevance';
                         searchInputDesktop.value = '';
                         searchInputMobile.value = '';
                     }
@@ -768,7 +783,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateQuantity(parseInt(productId, 10), parseInt(change, 10));
                     break;
                 case 'checkout':
-                    handleCheckout(); // This now handles the redirect
+                    handleCheckout();
                     break;
                 case 'toggle-category-menu':
                     showCategoryMenu = !showCategoryMenu;
@@ -794,7 +809,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const detailsEl = document.getElementById(`order-details-${orderId}`);
                     if (detailsEl) {
                         detailsEl.classList.toggle('hidden');
-                        // Optional: Change button text
                         actionTarget.textContent = detailsEl.classList.contains('hidden') ? 'View Details' : 'Hide Details';
                     }
                     break;
@@ -808,24 +822,22 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 searchInputDesktop.value = searchQuery;
             }
-             // Always switch to products view on search
             if (view !== 'products') {
                 view = 'products';
             }
-             renderApp(); // Render immediately on input
+            renderApp();
         };
         searchInputDesktop.addEventListener('input', handleSearch);
         searchInputMobile.addEventListener('input', handleSearch);
 
         window.addEventListener('click', (event) => {
-             // Only close if a menu is open and the click is outside BOTH dropdown containers
              if ((showCategoryMenu || showSortMenu) &&
                  !event.target.closest('#category-dropdown-container') &&
                  !event.target.closest('#sort-dropdown-container'))
              {
                 showCategoryMenu = false;
                 showSortMenu = false;
-                if (view === 'products') renderApp(); // Re-render only if needed
+                if (view === 'products') renderApp();
             }
         });
     };
@@ -833,22 +845,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- INITIALIZATION ---
     setupEventListeners();
 
-    // Check for redirect flag from payment.js
     const redirectTo = localStorage.getItem('redirectTo');
     if (redirectTo) {
         view = redirectTo;
-        localStorage.removeItem('redirectTo'); // Clear the flag
+        localStorage.removeItem('redirectTo');
     } else {
-        // Check for view from URL parameter (e.g., from payment.html header)
         const urlParams = new URLSearchParams(window.location.search);
         const urlView = urlParams.get('view');
         if (urlView && ['products', 'cart', 'wishlist', 'orders'].includes(urlView)) {
             view = urlView;
         } else {
-             view = 'products'; // Default view if nothing else specified
+             view = 'products';
         }
     }
 
-    renderApp(); // Initial render on page load
+    renderApp();
 
 });

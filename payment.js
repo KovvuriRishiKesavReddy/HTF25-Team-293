@@ -1,24 +1,18 @@
 document.addEventListener("DOMContentLoaded", () => {
     // --- Auth & Data Helper Functions ---
-    // User data is still used for pre-filling, but not strictly required
     function getCurrentUser() {
         const u = localStorage.getItem('currentUser');
-        // Basic error handling for potentially invalid JSON
         try {
             return u ? JSON.parse(u) : null;
         } catch(e) {
             console.error("Error parsing currentUser from localStorage:", e);
-            localStorage.removeItem('currentUser'); // Clear invalid data
+            localStorage.removeItem('currentUser');
             return null;
         }
     }
 
-    // THIS FUNCTION IS NO LONGER USED TO BLOCK ACCESS
-    // function ensureLoggedIn() { ... } // Keep it or remove it, it won't be called to block
-
     function prefillUserInfo() {
         const user = getCurrentUser();
-        // Only prefill if user data exists, otherwise leave fields blank
         if (user) {
             const nameInput = document.getElementById('user-name');
             const emailInput = document.getElementById('user-email');
@@ -32,23 +26,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function updateHeaderBadges() {
-        // This function remains the same as before
         const cart = JSON.parse(localStorage.getItem('cart') || '[]');
         const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
         const orders = JSON.parse(localStorage.getItem('orders') || '[]');
 
         const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
         const wishlistCount = wishlist.length;
-        // Correctly filter orders before accessing status
         const activeOrdersCount = Array.isArray(orders) ? orders.filter(o => o && o.status !== 'delivered').length : 0;
-
 
         const cartCountBadge = document.getElementById('cart-count-badge');
         const wishlistCountBadge = document.getElementById('wishlist-count-badge');
         const ordersCountBadge = document.getElementById('orders-count-badge');
         const wishlistIcon = document.getElementById('wishlist-icon');
 
-        // Check if elements exist before accessing properties
         if (cartCountBadge) {
             if (cartItemCount > 0) {
                 cartCountBadge.textContent = cartItemCount;
@@ -69,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-         if (ordersCountBadge) {
+        if (ordersCountBadge) {
             if (activeOrdersCount > 0) {
                 ordersCountBadge.textContent = activeOrdersCount;
                 ordersCountBadge.classList.remove('hidden');
@@ -79,11 +69,87 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // --- NEW: Create orders for both customer and seller ---
+    function createOrderAfterPayment(cart, finalTotal, subtotal, paymentMethod) {
+        const currentUser = getCurrentUser();
+        const orderId = 'ORD-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-6);
+        const currentDate = new Date().toISOString();
+        
+        // Calculate estimated delivery (3-5 days from now)
+        const estimatedDate = new Date();
+        estimatedDate.setDate(estimatedDate.getDate() + 4);
+        const estimatedDelivery = estimatedDate.toLocaleDateString('en-IN', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+
+        // Create customer order
+        const customerOrder = {
+            orderId: orderId,
+            items: cart.map(item => ({
+                id: item.id,
+                name: item.name,
+                description: item.description,
+                price: item.price,
+                discount: item.discount || 0,
+                quantity: item.quantity,
+                image: item.image
+            })),
+            total: Math.round(finalTotal),
+            status: 'processing', // Customer sees: processing, shipped, delivered
+            date: currentDate,
+            estimatedDelivery: estimatedDelivery,
+            paymentMethod: paymentMethod || 'Card'
+        };
+
+        // Save customer order
+        const customerOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+        customerOrders.unshift(customerOrder);
+        localStorage.setItem('orders', JSON.stringify(customerOrders));
+
+        // Create seller order
+        const firstName = currentUser?.firstName || 'Customer';
+        const lastName = currentUser?.lastName || '';
+        const customerName = `${firstName} ${lastName}`.trim();
+        const avatar = firstName.charAt(0).toUpperCase() + (lastName ? lastName.charAt(0).toUpperCase() : '');
+        
+        // Get main product name (or combine all product names)
+        const productName = cart.length === 1 
+            ? cart[0].name 
+            : `${cart.length} items: ${cart[0].name}${cart.length > 1 ? ' + more' : ''}`;
+        
+        const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
+        
+        const sellerOrder = {
+            id: orderId,
+            customer: customerName,
+            product: productName,
+            quantity: totalQuantity,
+            amount: subtotal / 83, // Convert INR to USD (approximate)
+            date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+            status: 'pending', // Seller sees: pending, processing, out_for_delivery, delivered, returned
+            avatar: avatar
+        };
+
+        // Save seller order
+        const sellerOrders = JSON.parse(localStorage.getItem('allOrders') || '[]');
+        sellerOrders.unshift(sellerOrder);
+        localStorage.setItem('allOrders', JSON.stringify(sellerOrders));
+        
+        // Set flag for seller dashboard to detect new order
+        localStorage.setItem('newOrderFromPayment', JSON.stringify(sellerOrder));
+
+        console.log('✅ Order created successfully:', orderId);
+        console.log('📦 Customer Order:', customerOrder);
+        console.log('🏪 Seller Order:', sellerOrder);
+        
+        return orderId;
+    }
+
     // --- Main Payment Page Logic ---
     function renderPaymentPage() {
-        // **REMOVED LOGIN CHECK HERE**
-        // if (!ensureLoggedIn()) return;
-
         const cart = JSON.parse(localStorage.getItem('cart') || '[]');
         const contentContainer = document.getElementById('payment-page-content');
 
@@ -102,7 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     </a>
                 </div>
             `;
-             lucide.createIcons(); // Render icons even on empty cart page
+            lucide.createIcons();
             return;
         }
 
@@ -121,11 +187,11 @@ document.addEventListener("DOMContentLoaded", () => {
         // --- Generate Order Summary Items HTML ---
         let orderItemsHtml = '';
         cart.forEach(item => {
-             const price = item.price || 0;
-             const discount = item.discount || 0;
-             const quantity = item.quantity || 1;
-             const discountedPrice = price * (1 - discount / 100);
-             const itemTotalPrice = discountedPrice * quantity;
+            const price = item.price || 0;
+            const discount = item.discount || 0;
+            const quantity = item.quantity || 1;
+            const discountedPrice = price * (1 - discount / 100);
+            const itemTotalPrice = discountedPrice * quantity;
             orderItemsHtml += `
                 <div class="order-summary-item">
                     <div class="order-summary-item-details">
@@ -137,7 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
         });
 
-        // --- Main HTML Template (Unchanged from previous version) ---
+        // --- Main HTML Template ---
         const paymentHtml = `
             <div>
                 <div class="payment-header animate-slide-up">
@@ -221,7 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     </div>
                                     <div class="card-details-grid">
                                         <div>
-                                            <label for="card-expiry" class="form-label">Expiry Date *</LabeL>
+                                            <label for="card-expiry" class="form-label">Expiry Date *</label>
                                             <input type="text" id="card-expiry" maxlength="5" placeholder="MM/YY" class="payment-form-input" />
                                         </div>
                                         <div>
@@ -298,7 +364,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // --- Inject HTML and Add Event Listeners ---
         contentContainer.innerHTML = paymentHtml;
-        lucide.createIcons(); // Render icons
+        lucide.createIcons();
 
         // Prefill user info (if available)
         prefillUserInfo();
@@ -314,12 +380,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         function showPaymentForm(method) {
             [cardDetails, upiDetails, netbankingDetails, walletDetails].forEach(el => {
-                if(el) el.classList.remove("active"); // Add check if element exists
+                if(el) el.classList.remove("active");
             });
 
             const elementToShow = document.getElementById(`${method}-details`);
             if (elementToShow) {
-                 elementToShow.classList.add("active");
+                elementToShow.classList.add("active");
             }
         }
 
@@ -340,17 +406,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const initialSelectedCard = document.querySelector('.payment-method-card[data-method="card"]');
         if (initialSelectedCard) initialSelectedCard.classList.add('selected');
-        showPaymentForm('card'); // Show card form by default
+        showPaymentForm('card');
 
         // --- Handle Form Submission ---
-        if (paymentForm) { // Check if form exists before adding listener
+        if (paymentForm) {
             paymentForm.addEventListener("submit", async (e) => {
                 e.preventDefault();
-                // **REMOVED LOGIN CHECK HERE**
-                // if (!ensureLoggedIn()) return;
 
                 const payBtn = e.target.querySelector('button[type="submit"]');
-                const originalContent = payBtn ? payBtn.innerHTML : ''; // Handle if button not found
+                const originalContent = payBtn ? payBtn.innerHTML : '';
 
                 if (payBtn) {
                     payBtn.disabled = true;
@@ -364,38 +428,27 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 try {
-                    // --- SIMULATE API CALL ---
-                    const orderData = {
-                        orderId: 'ORD' + Math.random().toString(36).substr(2, 9).toUpperCase(),
-                        date: new Date().toISOString(),
-                        items: cart, // The cart data from localStorage
-                        total: finalTotal, // Use the calculated finalTotal
-                        status: 'processing', // Initial status
-                        estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-                        paymentMethod: document.querySelector('input[name="paymentMethod"]:checked')?.value || 'N/A' // Safely get value
-                    };
+                    // Get payment method
+                    const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'Card';
+                    
+                    // Simulate API call delay
+                    await new Promise(resolve => setTimeout(resolve, 2000));
 
-                    const walletTypeInput = document.querySelector('input[name="wallet-type"]:checked');
-                    if (orderData.paymentMethod === 'wallet' && walletTypeInput) {
-                        orderData.walletType = walletTypeInput.value;
-                    }
+                    // --- CREATE ORDERS FOR BOTH CUSTOMER AND SELLER ---
+                    const orderId = createOrderAfterPayment(cart, finalTotal, subtotal, selectedPaymentMethod);
 
-                    console.log("Submitting Order:", orderData);
-                    await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate delay
-
-                    // --- Handle Simulated Success ---
-                    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-                    orders.unshift(orderData); // Add new order to the beginning
-                    localStorage.setItem('orders', JSON.stringify(orders));
-
-                    localStorage.removeItem("cart"); // Clear the cart
-                    localStorage.setItem('redirectTo', 'orders'); // Set flag for customer.js
+                    // Clear the cart after successful order
+                    localStorage.removeItem("cart");
+                    
+                    // Set redirect flag for customer.js
+                    localStorage.setItem('redirectTo', 'orders');
 
                     // Show success overlay
                     const overlay = document.createElement("div");
                     overlay.className = "payment-success-overlay";
                     overlay.innerHTML = `
                         <p class="success-message">✅ Payment Successful!</p>
+                        <p class="redirect-message">Order ID: ${orderId}</p>
                         <p class="redirect-message">Your order has been confirmed.</p>
                         <p class="redirect-message">🔄 Redirecting to My Orders...</p>
                         <div class="loader-spinner"></div>
@@ -409,10 +462,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 } catch (error) {
                     console.error('Payment error:', error);
-                    if (payBtn) { // Restore button only if it exists
+                    if (payBtn) {
                         payBtn.disabled = false;
                         payBtn.innerHTML = originalContent;
-                        lucide.createIcons(); // Re-render icon if needed
+                        lucide.createIcons();
                     }
                     alert('Payment failed: ' + error.message);
                 }
@@ -421,7 +474,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- Initial Load ---
-    updateHeaderBadges(); // Update header badges on load
-    renderPaymentPage();  // Render the main content
-    lucide.createIcons(); // Render all icons on the page
+    updateHeaderBadges();
+    renderPaymentPage();
+    lucide.createIcons();
 });
