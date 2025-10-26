@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - Seller Requests & Analytics</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f0f8ff;
+      color: #333;
+    }
+    header {
+      background-color: #0099ff;
+      color: white;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      font-size: 1.8em;
+      font-weight: bold;
+    }
+    .admin-info {
+      font-size: 1em;
+    }
+    main {
+      padding: 30px;
+    }
+    h2 {
+      color: #0099ff;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #e6f2ff;
+    }
+    tr:hover {
+      background-color: #f5faff;
+    }
+    .action-buttons button {
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.2s;
+    }
+    .accept {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .accept:hover {
+      background-color: #45a049;
+    }
+    .reject {
+      background-color: #f44336;
+      color: white;
+    }
+    .reject:hover {
+      background-color: #da190b;
+    }
+    .analytics {
+      margin-top: 50px;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .charts {
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    canvas {
+      max-width: 500px;
+      width: 100%;
+      height: 300px;
+    }
+    #backButton {
+      display: none;
+      margin-top: 10px;
+      background-color: #0099ff;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+    #backButton:hover {
+      background-color: #007acc;
+    }
+    .toggle-container {
+      text-align: right;
+      margin-bottom: 10px;
+    }
+    .toggle-container button {
+      background-color: #0099ff;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+    .toggle-container button:hover {
+      background-color: #007acc;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Vendora</div>
+    <div class="admin-info">Welcome, Admin</div>
+  </header>
+
+  <main>
+    <h2>Seller Requests</h2>
+    <p id="sellerCount" style="font-weight:bold; color:#0099ff;">Total Sellers: 0</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Seller Name</th>
+          <th>Shop Name</th>
+          <th>Email</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Ravi Kumar</td>
+          <td>RK Technology</td>
+          <td>ravi@example.com</td>
+          <td>Pending</td>
+          <td class="action-buttons">
+            <button class="accept">Accept</button>
+            <button class="reject">Reject</button>
+          </td>
+        </tr>
+        <tr>
+          <td>Priya Sharma</td>
+          <td>Trendy Electronics</td>
+          <td>priya@example.com</td>
+          <td>Pending</td>
+          <td class="action-buttons">
+            <button class="accept">Accept</button>
+            <button class="reject">Reject</button>
+          </td>
+        </tr>
+        <tr>
+          <td>Arun Mehta</td>
+          <td>Urban Electronics</td>
+          <td>arun@example.com</td>
+          <td>Pending</td>
+          <td class="action-buttons">
+            <button class="accept">Accept</button>
+            <button class="reject">Reject</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <section class="analytics">
+      <div class="toggle-container">
+        <button id="toggleChart">Switch to Pie Charts</button>
+      </div>
+      <h2>Customer & Product Analytics</h2>
+      <div class="charts">
+        <div>
+          <h3>Customer Growth</h3>
+          <canvas id="customerChart"></canvas>
+        </div>
+        <div>
+          <h3>Top Selling Products</h3>
+          <canvas id="productChart"></canvas>
+          <h3 id="brandTitle" style="display:none; margin-top:20px;">Leading Brands & Sellers</h3>
+          <canvas id="brandChart" style="display:none;"></canvas>
+          <button id="backButton">? Back</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Accept / Reject logic
+    document.querySelectorAll('.accept').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const row = this.closest('tr');
+        row.querySelector('td:nth-child(4)').textContent = 'Accepted';
+        row.querySelector('td:nth-child(4)').style.color = 'green';
+        updateSellerCount();
+      });
+    });
+
+    document.querySelectorAll('.reject').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const row = this.closest('tr');
+        row.querySelector('td:nth-child(4)').textContent = 'Rejected';
+        row.querySelector('td:nth-child(4)').style.color = 'red';
+        updateSellerCount();
+      });
+    });
+
+    // Function to update seller count dynamically
+    function updateSellerCount() {
+      const rows = document.querySelectorAll('tbody tr');
+      const total = rows.length;
+      let accepted = 0, rejected = 0, pending = 0;
+
+      rows.forEach(row => {
+        const status = row.querySelector('td:nth-child(4)').textContent.trim();
+        if (status === 'Accepted') accepted++;
+        else if (status === 'Rejected') rejected++;
+        else pending++;
+      });
+
+      document.getElementById('sellerCount').textContent =
+        `Total Sellers: ${total} | Accepted: ${accepted} | Rejected: ${rejected} | Pending: ${pending}`;
+    }
+
+    updateSellerCount(); // Initialize count
+
+    let chartType = 'bar';
+
+    // Customer growth chart
+    const ctx1 = document.getElementById('customerChart').getContext('2d');
+    let customerChart = new Chart(ctx1, {
+      type: chartType,
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{
+          label: 'New Customers',
+          data: [120, 180, 250, 300, 400, 550],
+          borderColor: '#0099ff',
+          borderWidth: 2,
+          backgroundColor: 'rgba(0,153,255,0.3)'
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+
+    // Product chart
+    const ctx2 = document.getElementById('productChart').getContext('2d');
+    let productChart = new Chart(ctx2, {
+      type: chartType,
+      data: {
+        labels: ['Mobiles',  'TV', 'Headphones','Cameras', 'Tablets'],
+        datasets: [{
+          label: 'Units Sold',
+          data: [500, 450, 600, 350, 400],
+          backgroundColor: ['#0099ff','#66ccff','#99e6ff','#33ccff','#3399ff']
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } },
+        onClick: (e, elements) => {
+          if (elements.length > 0) {
+            const index = elements[0].index;
+            const product = productChart.data.labels[index];
+            showBrandChart(product);
+          }
+        }
+      }
+    });
+
+    // Brand chart function
+    function showBrandChart(product) {
+      const brandData = {
+        'Mobiles': { labels: ['Samsung Mobile - Ravi', 'Xiaomi Mobile - Priya', 'Apple Mobile - Arun'], data: [200, 150, 100] },
+        'TV': { labels: ['Mi TV - Priya', 'Sony TV - Ravi', 'LG TV - Arun'], data: [180, 160, 110] },
+        'Headphones': { labels: ['Sony Headphones - Arun', 'Sony  - Ravi', 'Apple Earphones - Priya'], data: [250, 200, 150] },
+        'Cameras': { labels: ['Canon - Ravi', 'Sony - Priya', 'Kodak - Arun'], data: [150, 120, 80] },
+        'Tablets': { labels: ['Samsung - Priya', 'Apple - Arun', 'Oneplus - Ravi'], data: [170, 130, 100] }
+      };
+
+      const selected = brandData[product];
+      document.getElementById('brandTitle').style.display = 'block';
+      document.getElementById('brandTitle').textContent = `Leading Brands & Sellers for ${product}`;
+      document.getElementById('brandChart').style.display = 'block';
+      document.getElementById('backButton').style.display = 'inline-block';
+
+      const ctx3 = document.getElementById('brandChart').getContext('2d');
+      if (window.brandChartInstance) window.brandChartInstance.destroy();
+
+      window.brandChartInstance = new Chart(ctx3, {
+        type: chartType,
+        data: {
+          labels: selected.labels,
+          datasets: [{ label: 'Units Sold', data: selected.data, backgroundColor: '#00cc99' }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+      });
+    }
+
+    // Back button
+    document.getElementById('backButton').addEventListener('click', function() {
+      document.getElementById('brandChart').style.display = 'none';
+      document.getElementById('brandTitle').style.display = 'none';
+      this.style.display = 'none';
+    });
+
+    // Toggle chart type
+    document.getElementById('toggleChart').addEventListener('click', () => {
+      chartType = chartType === 'bar' ? 'pie' : 'bar';
+      document.getElementById('toggleChart').textContent =
+        chartType === 'bar' ? 'Switch to Pie Charts' : 'Switch to Bar Charts';
+
+      customerChart.destroy();
+      productChart.destroy();
+      if (window.brandChartInstance) window.brandChartInstance.destroy();
+
+      // Recreate customer chart
+      customerChart = new Chart(ctx1, {
+        type: chartType,
+        data: customerChart.data,
+        options: { responsive: true, plugins: { legend: { display: false } } }
+      });
+
+      // Recreate product chart
+      productChart = new Chart(ctx2, {
+        type: chartType,
+        data: productChart.data,
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          onClick: productChart.options.onClick
+        }
+      });
+
+      // Recreate brand chart if visible
+      if (document.getElementById('brandChart').style.display === 'block') {
+        const productName = document.getElementById('brandTitle').textContent.replace('Leading Brands & Sellers for ', '');
+        showBrandChart(productName);
+      }
+    });
+  </script>
+</body>
+</html>

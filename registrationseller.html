@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendora - Seller Registration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #87CEEB;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 0.95em;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input::placeholder {
+            color: #aaa;
+        }
+
+        .required {
+            color: #e74c3c;
+            margin-left: 2px;
+        }
+
+        .btn-register {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 10px;
+        }
+
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-register:active {
+            transform: translateY(0);
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        .error {
+            border-color: #e74c3c !important;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.85em;
+            margin-top: 5px;
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 25px;
+            }
+
+            .logo h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>Vendora</h1>
+            <p>Seller Registration</p>
+        </div>
+
+        <form id="registrationForm">
+            <div class="form-group">
+                <label for="ownerName">Business Owner Name <span class="required">*</span></label>
+                <input type="text" id="ownerName" name="ownerName" placeholder="Enter your full name" required>
+                <div class="error-message" id="ownerNameError">Please enter business owner name</div>
+            </div>
+
+            <div class="form-group">
+                <label for="shopName">Shop Name <span class="required">*</span></label>
+                <input type="text" id="shopName" name="shopName" placeholder="Enter your shop name" required>
+                <div class="error-message" id="shopNameError">Please enter shop name</div>
+            </div>
+
+            <div class="form-group">
+                <label for="businessId">Business ID <span class="required">*</span></label>
+                <input type="text" id="businessId" name="businessId" placeholder="Enter your business registration ID" required>
+                <div class="error-message" id="businessIdError">Please enter business ID</div>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone Number <span class="required">*</span></label>
+                <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
+                <div class="error-message" id="phoneError">Please enter a valid phone number</div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email (Gmail) <span class="required">*</span></label>
+                <input type="email" id="email" name="email" placeholder="Enter your Gmail address" required>
+                <div class="error-message" id="emailError">Please enter a valid email address</div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password <span class="required">*</span></label>
+                <input type="password" id="password" name="password" placeholder="Create a strong password" required>
+                <div class="error-message" id="passwordError">Password must be at least 6 characters</div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password <span class="required">*</span></label>
+                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter your password" required>
+                <div class="error-message" id="confirmPasswordError">Passwords do not match</div>
+            </div>
+
+            <button type="submit" class="btn-register">Register as Seller</button>
+        </form>
+
+        <div class="login-link">
+            Already have an account? <a href="login.html">Login here</a>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('registrationForm');
+        const inputs = form.querySelectorAll('input[required]');
+
+        // Form validation
+        function validateField(field) {
+            const value = field.value.trim();
+            const errorDiv = document.getElementById(field.id + 'Error');
+            
+            if (value === '') {
+                field.classList.add('error');
+                errorDiv.style.display = 'block';
+                return false;
+            }
+
+            // Email validation
+            if (field.type === 'email') {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(value)) {
+                    field.classList.add('error');
+                    errorDiv.textContent = 'Please enter a valid email address';
+                    errorDiv.style.display = 'block';
+                    return false;
+                }
+            }
+
+            // Phone validation
+            if (field.type === 'tel') {
+                const phoneRegex = /^[0-9]{10,15}$/;
+                if (!phoneRegex.test(value.replace(/[\s\-\(\)]/g, ''))) {
+                    field.classList.add('error');
+                    errorDiv.textContent = 'Please enter a valid phone number';
+                    errorDiv.style.display = 'block';
+                    return false;
+                }
+            }
+
+            // Password validation
+            if (field.id === 'password' && value.length < 6) {
+                field.classList.add('error');
+                errorDiv.style.display = 'block';
+                return false;
+            }
+
+            // Confirm password validation
+            if (field.id === 'confirmPassword') {
+                const password = document.getElementById('password').value;
+                if (value !== password) {
+                    field.classList.add('error');
+                    errorDiv.style.display = 'block';
+                    return false;
+                }
+            }
+
+            field.classList.remove('error');
+            errorDiv.style.display = 'none';
+            return true;
+        }
+
+        // Real-time validation
+        inputs.forEach(input => {
+            input.addEventListener('blur', () => validateField(input));
+            input.addEventListener('input', () => {
+                if (input.classList.contains('error')) {
+                    validateField(input);
+                }
+            });
+        });
+
+        // Form submission
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            let isValid = true;
+            inputs.forEach(input => {
+                if (!validateField(input)) {
+                    isValid = false;
+                }
+            });
+
+            if (isValid) {
+                // Collect form data
+                const formData = {
+                    ownerName: document.getElementById('ownerName').value,
+                    shopName: document.getElementById('shopName').value,
+                    businessId: document.getElementById('businessId').value,
+                    phone: document.getElementById('phone').value,
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value
+                };
+
+                // Store data (in a real application, send to backend)
+                console.log('Registration Data:', formData);
+                
+                // Show success message
+                alert('Registration successful! Redirecting to login page...');
+                
+                // Redirect to login page
+                window.location.href = 'login.html';
+            }
+        });
+    </script>
+</body>
+</html>

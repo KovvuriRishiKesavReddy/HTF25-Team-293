@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendora - Reset Password</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(to right, #b3e5ff, #e6f7ff);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .reset-container {
+      background-color: white;
+      padding: 50px 30px 40px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .logo {
+      font-size: 2em;
+      font-weight: 700;
+      color: #0099ff;
+      margin-bottom: 20px;
+    }
+
+    .reset-container h2 {
+      color: #0099ff;
+      margin-bottom: 30px;
+    }
+
+    .reset-container form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .reset-container input {
+      padding: 12px 15px;
+      border-radius: 25px;
+      border: 1px solid #ccc;
+      outline: none;
+      font-size: 1em;
+      transition: 0.2s;
+    }
+
+    .reset-container input:focus {
+      border-color: #0099ff;
+      box-shadow: 0 0 5px rgba(0,153,255,0.3);
+    }
+
+    .reset-container button {
+      padding: 12px;
+      border-radius: 25px;
+      border: none;
+      background-color: #0099ff;
+      color: white;
+      font-size: 1em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .reset-container button:hover {
+      background-color: #007acc;
+    }
+
+    .reset-container .login-link {
+      font-size: 0.9em;
+      color: #555;
+      margin-top: 15px;
+    }
+
+    .reset-container .login-link a {
+      color: #0099ff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .reset-container .login-link a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 480px) {
+      .reset-container {
+        padding: 40px 20px 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="reset-container">
+    <div class="logo">Vendora</div>
+    <h2>Reset Your Password</h2>
+    <form id="resetForm">
+        <input type="email" name="email" placeholder="Email" required>
+      <input type="password" name="newPassword" placeholder="New Password" required>
+      <input type="password" name="confirmPassword" placeholder="Confirm Password" required>
+      <button type="submit">Reset Password</button>
+    </form>
+    <div class="login-link">
+      Remembered your password? <a href="login.html">Login here</a>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('resetForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const newPassword = e.target.newPassword.value;
+      const confirmPassword = e.target.confirmPassword.value;
+
+      if (newPassword !== confirmPassword) {
+        alert("Passwords do not match!");
+        return;
+      }
+
+      // Placeholder for backend password update
+      alert("Password reset successful! Redirecting to login page...");
+      
+      // Redirect to login page
+      window.location.href = "login.html";
+    });
+  </script>
+
+</body>
+</html>

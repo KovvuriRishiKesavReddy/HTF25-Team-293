@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vendor Multi Product Entry</title>
+  <style>
+    body{font-family:system-ui,Arial; background:#e7f4ff; margin:0; padding:0}
+    
+    /* Navbar */
+    .navbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:12px 20px;
+      background:#0077cc;
+      color:#fff;
+    }
+    .navbar .logo{
+      font-size:24px;
+      font-weight:bold;
+    }
+    .navbar a{
+      color:#fff;
+      text-decoration:none;
+      margin-left:20px;
+      font-weight:500;
+      transition:0.3s;
+    }
+    .navbar a:hover{
+      text-decoration:underline;
+    }
+
+    /* Container */
+    .container{
+      max-width:1000px;
+      margin:20px auto;
+      background:#ffffff;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 6px 20px rgba(20,30,40,0.08);
+    }
+    h1{color:#0077cc;margin-bottom:10px}
+    .product-card{border:2px solid #b3e0ff;padding:12px;border-radius:10px;margin-bottom:10px;position:relative;background:#f5fbff}
+    .product-card input, .product-card textarea{display:block;width:100%;margin:6px 0;padding:8px;border-radius:6px;border:1px solid #aadfff}
+    button{background:#00aaff;color:#fff;border:0;padding:8px 14px;border-radius:8px;cursor:pointer;transition:0.3s}
+    button:hover{opacity:0.9}
+    button.secondary{background:#cceaff;color:#003f5c}
+    .remove-btn{position:absolute;right:10px;top:10px;background:#ff5757;color:#fff;border:0;padding:4px 8px;border-radius:6px;cursor:pointer}
+    .actions{display:flex;gap:10px;margin-top:10px}
+    table{width:100%;border-collapse:collapse;margin-top:20px}
+    th,td{padding:10px;border-bottom:1px solid #cceaff;text-align:left}
+    .preview-img{width:60px;height:60px;object-fit:cover;border-radius:8px;margin-top:6px;border:1px solid #aadfff}
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <div class="navbar">
+    <div class="logo">Vendora</div>
+    <div class="nav-links">
+      <a href="order seller.html">Orders</a>
+      <a href="product-analytics.html">Analytics</a>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <div class="container">
+    <h1>Vendor Multi Product Entry</h1>
+    <p>Add multiple products before saving them all together. You can also select images for each product and edit them later.</p>
+
+    <div id="product-list"></div>
+    <div class="actions">
+      <button id="add-product">+ Add Product</button>
+      <button id="save-all">Save All</button>
+      <button id="clear-all" class="secondary">Clear All</button>
+    </div>
+
+    <table id="products-table">
+      <thead><tr><th>Image</th><th>Product</th><th>Price</th><th>Stock</th><th>Description</th><th>Actions</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const productList = document.getElementById('product-list');
+    const tableBody = document.querySelector('#products-table tbody');
+
+    let savedProducts = [];
+
+    function createCard(product = {}, index = null){
+      const div = document.createElement('div');
+      div.className = 'product-card';
+      div.innerHTML = `
+        <button class="remove-btn" type="button"> </button>
+        <input type="text" placeholder="Product name" class="name" required />
+        <input type="number" placeholder="Price (?)" class="price" min="0" step="0.01" required />
+        <input type="number" placeholder="Stock quantity" class="stock" min="0" step="1" required />
+        <textarea placeholder="Description" class="desc"></textarea>
+        <input type="file" accept="image/*" class="image-input" />
+        <img class="preview-img" style="display:none;" />
+        <button class="update-btn" type="button" style="margin-top:6px; display:none;">Update Product</button>
+      `;
+
+      const fileInput = div.querySelector('.image-input');
+      const preview = div.querySelector('.preview-img');
+      const updateBtn = div.querySelector('.update-btn');
+      const removeBtn = div.querySelector('.remove-btn');
+
+      if(product.name){
+        div.querySelector('.name').value = product.name;
+        div.querySelector('.price').value = product.price;
+        div.querySelector('.stock').value = product.stock;
+        div.querySelector('.desc').value = product.desc;
+        if(product.imgSrc){ preview.src = product.imgSrc; preview.style.display='block'; }
+        updateBtn.style.display = 'inline-block';
+      }
+
+      fileInput.addEventListener('change', (e)=>{
+        const file = e.target.files[0];
+        if(file){
+          const reader = new FileReader();
+          reader.onload = ()=>{ preview.src = reader.result; preview.style.display = 'block'; };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      removeBtn.addEventListener('click',()=>{
+        div.remove();
+        if(index !== null){ savedProducts.splice(index,1); renderTable(); }
+      });
+
+      updateBtn.addEventListener('click',()=>{
+        savedProducts[index] = {
+          name: div.querySelector('.name').value.trim(),
+          price: parseFloat(div.querySelector('.price').value)||0,
+          stock: parseInt(div.querySelector('.stock').value)||0,
+          desc: div.querySelector('.desc').value.trim(),
+          imgSrc: preview.src || ''
+        };
+        renderTable();
+        div.remove();
+      });
+
+      productList.appendChild(div);
+    }
+
+    function saveAll(){
+      const cards = document.querySelectorAll('.product-card');
+      cards.forEach(card=>{
+        const name = card.querySelector('.name').value.trim();
+        if(!name) return;
+        const product = {
+          name,
+          price: parseFloat(card.querySelector('.price').value)||0,
+          stock: parseInt(card.querySelector('.stock').value)||0,
+          desc: card.querySelector('.desc').value.trim(),
+          imgSrc: card.querySelector('.preview-img').src || ''
+        };
+        savedProducts.push(product);
+      });
+      productList.innerHTML = '';
+      renderTable();
+    }
+
+    function renderTable(){
+      tableBody.innerHTML='';
+      savedProducts.forEach((p,i)=>{
+        const tr = document.createElement('tr');
+        const imgCell = p.imgSrc ? `<img src="${p.imgSrc}" width="60" height="60" style="object-fit:cover;border-radius:8px;border:1px solid #aadfff;"/>` : '';
+        tr.innerHTML = `<td>${imgCell}</td><td>${p.name}</td><td>?${p.price.toFixed(2)}</td><td>${p.stock}</td><td>${p.desc}</td><td><button onclick='editProduct(${i})'>Edit</button></td>`;
+        tableBody.appendChild(tr);
+      });
+    }
+
+    function editProduct(index){
+      createCard(savedProducts[index], index);
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+
+    document.getElementById('add-product').addEventListener('click',()=>createCard());
+    document.getElementById('save-all').addEventListener('click',saveAll);
+    document.getElementById('clear-all').addEventListener('click',()=>{productList.innerHTML='';savedProducts=[];tableBody.innerHTML='';});
+
+    createCard();
+  </script>
+</body>
+</html>

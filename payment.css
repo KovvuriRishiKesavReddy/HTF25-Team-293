@@ -1,0 +1,368 @@
+/* =========================================
+--- NEW PAYMENT PAGE STYLES START HERE ---
+=========================================
+*/
+
+/* --- Payment Page Layout --- */
+.payment-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+.payment-header h1 {
+    font-size: 2.25rem; /* 4xl in tailwind is 2.25rem */
+    font-weight: 700;
+    color: var(--black);
+    margin-bottom: 0.5rem;
+}
+.payment-header p {
+    font-size: 1rem;
+    color: var(--gray-600);
+    margin-bottom: 0.75rem;
+}
+
+.secure-badge {
+    background-image: linear-gradient(135deg, var(--green-600), var(--green-700));
+    color: var(--white);
+    border-radius: 9999px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.secure-badge svg {
+    width: 16px;
+    height: 16px;
+}
+
+.payment-layout-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+}
+
+.order-summary-card {
+    background-color: var(--blue-50);
+    border: 1px solid var(--blue-200);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-md);
+}
+
+.order-summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--blue-200);
+}
+.order-summary-item:last-child {
+    border-bottom: none;
+}
+.order-summary-item-details p:first-child {
+    font-weight: 600;
+    color: var(--black);
+}
+.order-summary-item-details p:last-child {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+}
+.order-summary-item-price {
+    font-weight: 700;
+    color: var(--black);
+}
+
+.payment-card {
+    background-color: var(--white);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--gray-200);
+}
+
+.payment-section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--black);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.payment-section-title svg {
+    width: 20px;
+    height: 20px;
+    color: var(--blue-600);
+}
+
+.payment-method-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+@media (min-width: 640px) {
+    .payment-method-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.payment-method-card {
+    background-color: var(--white);
+    border: 2px solid var(--gray-200);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    transition: all 0.3s;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.payment-method-card:hover {
+    border-color: var(--blue-500);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+.payment-method-card.selected {
+    border-color: var(--blue-600);
+    background-color: var(--blue-50);
+    transform: translateY(-2px);
+}
+.payment-method-card input[type="radio"] {
+    width: 1.25rem;
+    height: 1.25rem;
+    accent-color: var(--blue-600);
+}
+.payment-method-card-details p:first-child {
+    font-weight: 600;
+    color: var(--black);
+}
+.payment-method-card-details p:last-child {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+}
+
+/* --- Form Styles --- */
+.form-group {
+    margin-bottom: 1rem;
+}
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-600);
+    margin-bottom: 0.5rem;
+}
+
+.payment-form-input,
+.payment-form-select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    color: var(--black);
+    background-color: var(--white);
+    border: 2px solid var(--gray-300);
+    transition: all 0.3s;
+    font-size: 1rem;
+}
+.payment-form-input:focus,
+.payment-form-select:focus {
+    outline: none;
+    border-color: var(--blue-500);
+    background-color: var(--white);
+}
+
+.personal-info-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+@media (min-width: 768px) {
+    .personal-info-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.card-details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.wallet-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+.wallet-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 2px solid var(--gray-300);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.wallet-option:hover {
+    border-color: var(--blue-500);
+}
+.wallet-option input[type="radio"] {
+    width: 1.25rem;
+    height: 1.25rem;
+    accent-color: var(--blue-600);
+}
+
+.payment-form-section {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+.payment-form-section.active {
+    max-height: 500px;
+}
+
+/* --- Pay Button --- */
+.pay-now-btn {
+    width: 100%;
+    background-image: linear-gradient(to right, var(--green-600), var(--green-700));
+    color: var(--white);
+    font-weight: 700;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: var(--shadow-lg);
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 1.125rem;
+}
+.pay-now-btn:hover {
+    background-image: linear-gradient(to right, var(--green-700), var(--green-600));
+    box-shadow: var(--shadow-xl);
+}
+.pay-now-btn:disabled {
+    background-image: linear-gradient(to right, var(--gray-400), var(--gray-500));
+    cursor: not-allowed;
+}
+.pay-now-btn svg {
+    width: 20px;
+    height: 20px;
+}
+/* Spinner animation for button */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+/* --- Sidebar Amount Card --- */
+.amount-card {
+    background-color: var(--green-50);
+    border: 1px solid var(--green-200);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-md);
+    position: sticky;
+    top: 6rem; /* Adjust based on your header height */
+}
+
+.amount-card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+.amount-card-row span:first-child {
+    color: var(--gray-600);
+}
+.amount-card-row span:last-child {
+    font-weight: 600;
+    color: var(--black);
+}
+.amount-card-divider {
+    border: 0;
+    height: 1px;
+    background-color: var(--gray-300);
+    margin: 1rem 0;
+}
+.amount-card-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+}
+.amount-card-total span:first-child {
+    font-size: 1.125rem;
+    color: var(--black);
+}
+.amount-card-total span:last-child {
+    font-size: 1.25rem;
+    color: var(--green-600);
+}
+
+/* --- Animation --- */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.animate-slide-up {
+    animation: slideInUp 0.5s ease-out;
+}
+
+/* --- Success Overlay --- */
+.payment-success-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.9);
+    z-index: 100;
+}
+.payment-success-overlay p {
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+.payment-success-overlay .success-message {
+    font-size: 1.5rem;
+    color: var(--green-700);
+}
+.payment-success-overlay .redirect-message {
+    font-size: 1.125rem;
+    color: var(--blue-700);
+}
+.payment-success-overlay .loader-spinner {
+    width: 4rem; /* w-16 */
+    height: 4rem; /* h-16 */
+    border: 4px solid var(--blue-500);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* --- Responsive Layout for Payment Page --- */
+@media (min-width: 1024px) { /* lg */
+    .payment-layout-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .payment-layout-main {
+        grid-column: span 2 / span 2;
+    }
+    .payment-layout-sidebar {
+        grid-column: span 1 / span 1;
+    }
+}

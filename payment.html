@@ -1,20 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShopZone</title>
-    <link rel="stylesheet" href="customer.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ShopZone - Complete Payment</title>
+    
+    <link rel="stylesheet" href="customer.css" />
+    
+    <link rel="stylesheet" href="payment.css" />
+    
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-
     <header class="app-header">
         <div class="container header-container">
             <div class="header-left">
-                <h1 class="logo" data-action="change-view" data-view="products">
+                <a href="customer.html" class="logo">
                     Vendora
-                </h1>
+                </a>
             </div>
 
             <div class="header-search-desktop">
@@ -30,18 +33,18 @@
             </div>
 
             <div class="header-nav">
-                <button class="nav-button" title="Orders" data-action="change-view" data-view="orders">
+                <a href="customer.html?view=orders" class="nav-button" title="Orders">
                     <i data-lucide="package"></i>
                     <span id="orders-count-badge" class="nav-badge hidden"></span>
-                </button>
-                <button class="nav-button" title="Wishlist" data-action="change-view" data-view="wishlist">
+                </a>
+                <a href="customer.html?view=wishlist" class="nav-button" title="Wishlist">
                     <i data-lucide="heart" id="wishlist-icon"></i>
                     <span id="wishlist-count-badge" class="nav-badge hidden"></span>
-                </button>
-                <button class="nav-button" title="Cart" data-action="change-view" data-view="cart">
+                </a>
+                <a href="customer.html?view=cart" class="nav-button" title="Cart">
                     <i data-lucide="shopping-cart"></i>
                     <span id="cart-count-badge" class="nav-badge hidden"></span>
-                </button>
+                </a>
             </div>
         </div>
 
@@ -59,12 +62,14 @@
     </header>
 
     <main class="container main-content">
-        <div id="products-view"></div>
-        <div id="cart-view" class="hidden"></div>
-        <div id="wishlist-view" class="hidden"></div>
-        <div id="orders-view" class="hidden"></div>
+        <div id="payment-page-content">
+            </div>
     </main>
 
-    <script src="customer.js"></script>
+    <footer class="app-footer">
+        <div class="text-center">© 2025 ShopZone. All rights reserved.</div>
+    </footer>
+
+    <script src="payment.js"></script>
 </body>
 </html>

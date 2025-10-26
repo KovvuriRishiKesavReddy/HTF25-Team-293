@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vendora - Electronics Shopping</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+      background-color: #f0f8ff;
+      color: #333;
+    }
+
+    /* NAVBAR */
+    header {
+      background: linear-gradient(90deg, #66ccff, #0099ff);
+      color: white;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 30px;
+    }
+
+    .logo {
+      font-size: 1.8em;
+      font-weight: 700;
+      letter-spacing: 1px;
+      flex: 1 1 150px;
+    }
+
+    nav {
+      display: flex;
+      gap: 20px;
+      flex: 1 1 200px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+
+    .search-bar {
+      flex: 1 1 300px;
+      position: relative;
+      margin: 10px 20px;
+    }
+
+    .search-bar input {
+      width: 100%;
+      padding: 10px 40px 10px 15px;
+      border-radius: 25px;
+      border: none;
+      outline: none;
+      font-size: 1em;
+    }
+
+    .search-bar button {
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: #0099ff;
+      border: none;
+      color: white;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      font-size: 1.1em;
+    }
+
+    /* HERO SECTION */
+    .hero {
+      background: linear-gradient(to right, #b3e5ff, #e6f7ff);
+      padding: 60px 30px;
+      text-align: center;
+    }
+
+    .hero h1 {
+      color: #0099ff;
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .hero p {
+      font-size: 1.2em;
+      color: #444;
+      margin-bottom: 25px;
+    }
+
+    .hero button {
+      background-color: #0099ff;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 25px;
+      font-size: 1em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .hero button:hover {
+      background-color: #007acc;
+    }
+
+    /* FEATURED PRODUCTS */
+    .featured {
+      padding: 50px 40px;
+      text-align: center;
+      background-color: #f7fcff;
+    }
+
+    .featured h2 {
+      color: #0099ff;
+      margin-bottom: 30px;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 25px;
+    }
+
+    .product-card {
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      overflow: hidden;
+      transition: transform 0.2s;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .product-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .product-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+    }
+
+    .product-info {
+      padding: 15px;
+    }
+
+    .product-info h4 {
+      color: #007acc;
+      margin-bottom: 8px;
+    }
+
+    .product-info p {
+      color: #555;
+      margin: 0;
+    }
+
+    .product-info button {
+      background-color: #0099ff;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.9em;
+      margin-top: 10px;
+      transition: 0.3s;
+    }
+
+    .product-info button:hover {
+      background-color: #007acc;
+    }
+
+    /* FOOTER */
+    footer {
+      background-color: #0099ff;
+      color: white;
+      text-align: center;
+      padding: 20px 10px;
+      margin-top: 50px;
+    }
+
+    footer p {
+      margin: 8px 0;
+    }
+
+    footer .social-icons {
+      margin-top: 10px;
+    }
+
+    footer .social-icons a {
+      color: white;
+      margin: 0 10px;
+      text-decoration: none;
+      font-size: 1.2em;
+      transition: 0.3s;
+    }
+
+    footer .social-icons a:hover {
+      color: #cceeff;
+    }
+
+    @media (max-width: 900px) {
+      header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      nav {
+        justify-content: space-around;
+        margin-top: 10px;
+      }
+      .search-bar {
+        margin: 10px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">Vendora</div>
+    <div class="search-bar">
+      <input type="text" placeholder="Search for products..." />
+      <button>??</button>
+    </div>
+    <nav>
+      <a href="homecustomer.html">Home</a>
+      <a href="customer.html">Shop</a>
+      <a href="#">Cart</a>
+      <a href="#">Profile</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h1>Welcome to Vendora</h1>
+    <p>Only the best electronics: TVs, Tablets, Headphones, Watches & Laptops!</p>
+    <button ><a href="customer.html">Start Shopping</a></button>
+  </section>
+
+  <section class="featured">
+    <h2>Featured Products</h2>
+    <div class="product-grid">
+      <a href="/product/tv" class="product-card">
+        <img src="https://source.unsplash.com/400x300/?tv" alt="TV">
+        <div class="product-info">
+          <h4>Smart TV 55"</h4>
+          <p>$499.99</p>
+          <button>Add to Cart</button>
+        </div>
+      </a>
+      <a href="/product/tablet" class="product-card">
+        <img src="https://source.unsplash.com/400x300/?tablet" alt="Tablet">
+        <div class="product-info">
+          <h4>Android Tablet</h4>
+          <p>$299.99</p>
+          <button>Add to Cart</button>
+        </div>
+      </a>
+      <a href="/product/headphones" class="product-card">
+        <img src="https://source.unsplash.com/400x300/?headphones" alt="Headphones">
+        <div class="product-info">
+          <h4>Wireless Headphones</h4>
+          <p>$89.99</p>
+          <button>Add to Cart</button>
+        </div>
+      </a>
+      <a href="/product/watch" class="product-card">
+        <img src="https://source.unsplash.com/400x300/?watch" alt="Watch">
+        <div class="product-info">
+          <h4>Smart Watch</h4>
+          <p>$149.99</p>
+          <button>Add to Cart</button>
+        </div>
+      </a>
+      <a href="/product/laptop" class="product-card">
+        <img src="https://source.unsplash.com/400x300/?laptop" alt="Laptop">
+        <div class="product-info">
+          <h4>High-End Laptop</h4>
+          <p>$999.99</p>
+          <button>Add to Cart</button>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    <p>  2025 Vendora. All rights reserved.</p>
+    <div class="social-icons">
+      <a href="#">??</a>
+      <a href="#">??</a>
+      <a href="#">??</a>
+      <a href="#">??</a>
+    </div>
+  </footer>
+
+</body>
+</html>

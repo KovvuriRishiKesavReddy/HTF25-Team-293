@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendora - Register</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(to right, #b3e5ff, #e6f7ff);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .register-container {
+      background-color: white;
+      padding: 50px 30px 40px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .logo {
+      font-size: 2em;
+      font-weight: 700;
+      color: #0099ff;
+      margin-bottom: 20px;
+    }
+
+    .register-container h2 {
+      color: #0099ff;
+      margin-bottom: 30px;
+    }
+
+    .register-container form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .register-container input {
+      padding: 12px 15px;
+      border-radius: 25px;
+      border: 1px solid #ccc;
+      outline: none;
+      font-size: 1em;
+      transition: 0.2s;
+    }
+
+    .register-container input:focus {
+      border-color: #0099ff;
+      box-shadow: 0 0 5px rgba(0,153,255,0.3);
+    }
+
+    .register-container button {
+      padding: 12px;
+      border-radius: 25px;
+      border: none;
+      background-color: #0099ff;
+      color: white;
+      font-size: 1em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .register-container button:hover {
+      background-color: #007acc;
+    }
+
+    .register-container .login-link {
+      font-size: 0.9em;
+      color: #555;
+      margin-top: 15px;
+    }
+
+    .register-container .login-link a {
+      color: #0099ff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .register-container .login-link a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 480px) {
+      .register-container {
+        padding: 40px 20px 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="register-container">
+    <div class="logo">Vendora</div>
+    <h2>Create Your Account</h2>
+    <form id="registrationForm">
+      <input type="text" name="fullname" placeholder="Full Name" required>
+      <input type="email" name="email" placeholder="Email Address" required>
+      <input type="tel" name="phone" placeholder="Phone Number (optional)">
+      <input type="password" name="password" placeholder="Password" required>
+      <input type="password" name="confirmPassword" placeholder="Confirm Password" required>
+      <button type="submit">Register</button>
+    </form>
+    <div class="login-link">
+      Already have an account? <a href="login.html">Login here</a>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('registrationForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const password = e.target.password.value;
+      const confirmPassword = e.target.confirmPassword.value;
+
+      if (password !== confirmPassword) {
+        alert("Passwords do not match!");
+        return;
+      }
+
+      // Placeholder for backend integration
+      alert("Registration successful! ");
+      window.location.href = 'login.html';
+    });
+  </script>
+
+</body>
+</html>

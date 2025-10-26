@@ -1,7 +1,30 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    // --- ADDED: Simulate user and load state ---
+    if (!localStorage.getItem('currentUser')) {
+        localStorage.setItem('currentUser', JSON.stringify({
+            firstName: 'ShopZone',
+            lastName: 'User',
+            email: 'user@shopzone.com',
+            phoneNumber: '+91 98765 43210'
+        }));
+    }
+    const getInitialState = (key, defaultValue) => {
+        const storedValue = localStorage.getItem(key);
+        // Basic error handling for potentially invalid JSON
+        try {
+            return storedValue ? JSON.parse(storedValue) : defaultValue;
+        } catch (e) {
+            console.error(`Error parsing localStorage key "${key}":`, e);
+            localStorage.removeItem(key); // Clear invalid data
+            return defaultValue;
+        }
+    };
+    // ------------------------------------------
+
     // --- CONSTANTS (Data) ---
     const PRODUCTS = [
+        // (Your existing product data remains unchanged)
       { id: 1, name: 'iPhone 15 Pro', category: 'mobiles', price: 129999, rating: 4.8, reviews: 2453, image: '📱', description: '256GB, Titanium Blue', stock: 15, discount: 10 },
       { id: 2, name: 'Samsung Galaxy S24', category: 'mobiles', price: 89999, rating: 4.6, reviews: 1876, image: '📱', description: '128GB, Phantom Black', stock: 20, discount: 15 },
       { id: 3, name: 'OnePlus 12', category: 'mobiles', price: 64999, rating: 4.5, reviews: 1234, image: '📱', description: '256GB, Glacial White', stock: 25, discount: 20 },
@@ -19,39 +42,36 @@ document.addEventListener('DOMContentLoaded', () => {
       { id: 15, name: 'Canon EOS R6', category: 'cameras', price: 234999, rating: 4.9, reviews: 234, image: '📷', description: 'Mirrorless, 20MP', stock: 6, discount: 5 },
       { id: 16, name: 'Sony A7 IV', category: 'cameras', price: 249999, rating: 4.9, reviews: 198, image: '📷', description: '33MP, 4K Video', stock: 5, discount: 6 },
     ];
-
     const CATEGORIES = [
-      { id: 'all', name: 'All Products', icon: '🛍️' },
-      { id: 'mobiles', name: 'Mobiles', icon: '📱' },
-      { id: 'laptops', name: 'Laptops', icon: '💻' },
-      { id: 'watches', name: 'Watches', icon: '⌚' },
-      { id: 'headphones', name: 'Headphones', icon: '🎧' },
-      { id: 'tablets', name: 'Tablets', icon: '📱' },
-      { id: 'cameras', name: 'Cameras', icon: '📷' },
+        { id: 'all', name: 'All Products', icon: '🛍️' },
+        { id: 'mobiles', name: 'Mobiles', icon: '📱' },
+        { id: 'laptops', name: 'Laptops', icon: '💻' },
+        { id: 'watches', name: 'Watches', icon: '⌚' },
+        { id: 'headphones', name: 'Headphones', icon: '🎧' },
+        { id: 'tablets', name: 'Tablets', icon: '📱' },
+        { id: 'cameras', name: 'Cameras', icon: '📷' },
     ];
-
     const ORDER_STATUSES = [
-      { status: 'processing', label: 'Order Processing', icon: 'package', color: 'blue' },
-      { status: 'shipped', label: 'Shipped', icon: 'truck', color: 'orange' },
-      { status: 'delivered', label: 'Delivered', icon: 'check-circle', color: 'green' },
+        { status: 'processing', label: 'Order Processing', icon: 'package', color: 'blue' },
+        { status: 'shipped', label: 'Shipped', icon: 'truck', color: 'orange' },
+        { status: 'delivered', label: 'Delivered', icon: 'check-circle', color: 'green' },
     ];
-
     const SORT_OPTIONS = {
-      'relevance': 'Relevance',
-      'price-low': 'Price: Low to High',
-      'price-high': 'Price: High to Low',
-      'rating': 'Customer Rating',
-      'name': 'Name: A to Z'
+        'relevance': 'Relevance',
+        'price-low': 'Price: Low to High',
+        'price-high': 'Price: High to Low',
+        'rating': 'Customer Rating',
+        'name': 'Name: A to Z'
     };
 
-    // --- APPLICATION STATE ---
+    // --- APPLICATION STATE (Loaded from localStorage) ---
     let selectedCategory = 'all';
     let searchQuery = '';
     let sortBy = 'relevance';
-    let cart = [];
-    let wishlist = [];
-    let orders = [];
-    let view = 'products';
+    let cart = getInitialState('cart', []);
+    let wishlist = getInitialState('wishlist', []);
+    let orders = getInitialState('orders', []);
+    let view = 'products'; // Default, will be updated by redirect logic
     let showCategoryMenu = false;
     let showSortMenu = false;
 
@@ -60,16 +80,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const cartView = document.getElementById('cart-view');
     const wishlistView = document.getElementById('wishlist-view');
     const ordersView = document.getElementById('orders-view');
-    
     const searchInputDesktop = document.getElementById('search-input-desktop');
     const searchInputMobile = document.getElementById('search-input-mobile');
-
     const cartCountBadge = document.getElementById('cart-count-badge');
     const wishlistCountBadge = document.getElementById('wishlist-count-badge');
     const ordersCountBadge = document.getElementById('orders-count-badge');
     const wishlistIcon = document.getElementById('wishlist-icon');
 
     // --- STATE MANAGEMENT & LOGIC FUNCTIONS ---
+
+    // --- ADDED: Function to save state ---
+    const saveStateToLocalStorage = () => {
+        localStorage.setItem('cart', JSON.stringify(cart));
+        localStorage.setItem('wishlist', JSON.stringify(wishlist));
+        localStorage.setItem('orders', JSON.stringify(orders));
+    };
+    // ------------------------------------
 
     const getFilteredAndSortedProducts = () => {
         let filtered = PRODUCTS;
@@ -88,10 +114,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const sorted = [...filtered];
         switch (sortBy) {
             case 'price-low':
-                sorted.sort((a, b) => a.price - b.price);
+                // Sort by discounted price
+                sorted.sort((a, b) => (a.price * (1 - a.discount / 100)) - (b.price * (1 - b.discount / 100)));
                 break;
             case 'price-high':
-                sorted.sort((a, b) => b.price - a.price);
+                 // Sort by discounted price
+                sorted.sort((a, b) => (b.price * (1 - b.discount / 100)) - (a.price * (1 - a.discount / 100)));
                 break;
             case 'rating':
                 sorted.sort((a, b) => b.rating - a.rating);
@@ -115,13 +143,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.id === productId ? { ...item, quantity: item.quantity + 1 } : item
             );
         } else {
+            // Add all product details to cart, including discount
             cart = [...cart, { ...product, quantity: 1 }];
         }
+        saveStateToLocalStorage(); // <-- Save state
         renderApp();
     };
 
     const removeFromCart = (productId) => {
         cart = cart.filter(item => item.id !== productId);
+        saveStateToLocalStorage(); // <-- Save state
         renderApp();
     };
 
@@ -129,12 +160,15 @@ document.addEventListener('DOMContentLoaded', () => {
         cart = cart.map(item => {
             if (item.id === productId) {
                 const newQuantity = item.quantity + change;
-                return newQuantity > 0 ? { ...item, quantity: newQuantity } : item;
+                // Prevent quantity going below 1, remove if it reaches 0 (optional)
+                return newQuantity > 0 ? { ...item, quantity: newQuantity } : null; // Return null to filter out
             }
             return item;
-        }).filter(item => item.quantity > 0);
+        }).filter(item => item !== null); // Filter out items marked for removal
+        saveStateToLocalStorage(); // <-- Save state
         renderApp();
     };
+
 
     const toggleWishlist = (productId) => {
         const product = PRODUCTS.find(p => p.id === productId);
@@ -146,53 +180,43 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             wishlist = [...wishlist, product];
         }
+        saveStateToLocalStorage(); // <-- Save state
         renderApp();
     };
 
     const isInWishlist = (productId) => wishlist.some(item => item.id === productId);
 
-    const getCartTotal = () => cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    // --- MODIFIED: Calculate total using discounted price ---
+    const getCartTotal = () => cart.reduce((sum, item) => {
+        const discountedPrice = item.price * (1 - (item.discount || 0) / 100);
+        return sum + discountedPrice * item.quantity;
+    }, 0);
+    // --------------------------------------------------------
+
     const getCartItemCount = () => cart.reduce((sum, item) => sum + item.quantity, 0);
 
+    // --- CORRECTED: handleCheckout now just redirects ---
     const handleCheckout = () => {
-        const orderId = 'ORD' + Math.random().toString(36).substr(2, 9).toUpperCase();
-        const newOrder = {
-            orderId,
-            date: new Date().toISOString(),
-            items: cart.map(item => ({ ...item })),
-            total: getCartTotal(),
-            status: 'processing',
-            estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString()
-        };
-        
-        orders = [newOrder, ...orders];
-        cart = [];
-        view = 'orders';
-        renderApp();
+        // Save the current state just in case
+        saveStateToLocalStorage();
 
-        setTimeout(() => {
-            orders = orders.map(order =>
-                order.orderId === orderId ? { ...order, status: 'shipped' } : order
-            );
-            if (view === 'orders') renderApp(); // Only re-render if user is still on orders page
-        }, 3000);
+        // Ensure user is logged in (optional, but good practice)
+        if (!localStorage.getItem('currentUser')) {
+             alert("Please log in to check out.");
+             // You would redirect to a login page here in a real app
+             return;
+        }
 
-        setTimeout(() => {
-            orders = orders.map(order =>
-                order.orderId === orderId ? { ...order, status: 'delivered' } : order
-            );
-            if (view === 'orders') renderApp();
-        }, 6000);
+        // Redirect to the new payment page
+        window.location.href = 'payment.html';
     };
+    // ----------------------------------------------------
 
     const getCategoryName = (id) => CATEGORIES.find(c => c.id === id)?.name || 'All Products';
     const getSortName = (id) => SORT_OPTIONS[id] || 'Sort';
 
     // --- RENDER FUNCTIONS ---
 
-    /**
-     * The main render function. Calls specific renderers based on the current view.
-     */
     const renderApp = () => {
         // 1. Update view visibility
         productsView.classList.toggle('hidden', view !== 'products');
@@ -223,15 +247,13 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
     };
 
-    /**
-     * Updates the count badges in the header
-     */
     const updateHeaderBadges = () => {
         const cartItemCount = getCartItemCount();
         const wishlistCount = wishlist.length;
-        const activeOrdersCount = orders.filter(o => o.status !== 'delivered').length;
+        // Correctly filter orders before accessing status
+        const activeOrdersCount = orders ? orders.filter(o => o && o.status !== 'delivered').length : 0;
 
-        // Cart Badge
+
         if (cartItemCount > 0) {
             cartCountBadge.textContent = cartItemCount;
             cartCountBadge.classList.remove('hidden');
@@ -239,17 +261,15 @@ document.addEventListener('DOMContentLoaded', () => {
             cartCountBadge.classList.add('hidden');
         }
 
-        // Wishlist Badge
         if (wishlistCount > 0) {
             wishlistCountBadge.textContent = wishlistCount;
             wishlistCountBadge.classList.remove('hidden');
-            wishlistIcon.classList.add('filled');
+            if (wishlistIcon) wishlistIcon.classList.add('filled'); // Check if icon exists
         } else {
             wishlistCountBadge.classList.add('hidden');
-            wishlistIcon.classList.remove('filled');
+            if (wishlistIcon) wishlistIcon.classList.remove('filled'); // Check if icon exists
         }
 
-        // Orders Badge
         if (activeOrdersCount > 0) {
             ordersCountBadge.textContent = activeOrdersCount;
             ordersCountBadge.classList.remove('hidden');
@@ -258,13 +278,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    /**
-     * Renders the product grid and filter/sort controls
-     */
+
     const renderProductsView = () => {
         const products = getFilteredAndSortedProducts();
-        
-        // Render Filter/Sort Header
+
         const headerHTML = `
             <div class="filter-sort-header">
                 <div class="filter-sort-container">
@@ -320,7 +337,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
-        // Render Product Grid
         let gridHTML = '';
         if (products.length === 0) {
             gridHTML = `
@@ -334,7 +350,8 @@ document.addEventListener('DOMContentLoaded', () => {
             gridHTML = `
                 <div class="product-grid">
                     ${products.map(product => {
-                        const discountedPrice = product.price * (1 - product.discount / 100);
+                        // Calculate discounted price here as well for consistency
+                        const discountedPrice = product.price * (1 - (product.discount || 0) / 100);
                         const productInWishlist = isInWishlist(product.id);
                         return `
                             <div class="product-card">
@@ -400,12 +417,10 @@ document.addEventListener('DOMContentLoaded', () => {
         productsView.innerHTML = headerHTML + gridHTML;
     };
 
-    /**
-     * Renders the shopping cart view
-     */
+    // --- MODIFIED: Render Cart with Discounted Prices ---
     const renderCartView = () => {
         const cartItemCount = getCartItemCount();
-        const cartTotal = getCartTotal();
+        const cartTotal = getCartTotal(); // Uses the modified getCartTotal function
         let contentHTML = '';
 
         if (cart.length === 0) {
@@ -426,50 +441,57 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             contentHTML = `
                 <div class="cart-items-container">
-                    ${cart.map(item => `
-                        <div class="cart-item">
-                            <div class="cart-item-image">${item.image}</div>
-                            <div class="cart-item-details">
-                                <h3 class="cart-item-name">${item.name}</h3>
-                                <p class="cart-item-description">${item.description}</p>
-                                <p class="cart-item-price">₹${item.price.toLocaleString()}</p>
+                    ${cart.map(item => {
+                        // Calculate discounted price for each item
+                        const discountedPrice = item.price * (1 - (item.discount || 0) / 100);
+                        const itemTotalPrice = discountedPrice * item.quantity;
+                        return `
+                            <div class="cart-item">
+                                <div class="cart-item-image">${item.image}</div>
+                                <div class="cart-item-details">
+                                    <h3 class="cart-item-name">${item.name}</h3>
+                                    <p class="cart-item-description">${item.description}</p>
+                                    <p class="cart-item-price">
+                                        ₹${Math.round(discountedPrice).toLocaleString()}
+                                        ${item.discount > 0 ? `<span class="product-price-original" style="font-size: 0.9em; margin-left: 5px;">₹${item.price.toLocaleString()}</span>` : ''}
+                                    </p>
+                                </div>
+                                <div class="quantity-control">
+                                    <button
+                                        class="quantity-btn"
+                                        data-action="update-quantity"
+                                        data-product-id="${item.id}"
+                                        data-change="-1"
+                                    >
+                                        -
+                                    </button>
+                                    <span class="quantity-display">${item.quantity}</span>
+                                    <button
+                                        class="quantity-btn"
+                                        data-action="update-quantity"
+                                        data-product-id="${item.id}"
+                                        data-change="1"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                                <div class="cart-item-total">
+                                    <div class="cart-item-total-price">₹${Math.round(itemTotalPrice).toLocaleString()}</div>
+                                    <button
+                                        class="cart-item-remove-btn"
+                                        data-action="remove-from-cart"
+                                        data-product-id="${item.id}"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
                             </div>
-                            <div class="quantity-control">
-                                <button
-                                    class="quantity-btn"
-                                    data-action="update-quantity"
-                                    data-product-id="${item.id}"
-                                    data-change="-1"
-                                >
-                                    -
-                                </button>
-                                <span class="quantity-display">${item.quantity}</span>
-                                <button
-                                    class="quantity-btn"
-                                    data-action="update-quantity"
-                                    data-product-id="${item.id}"
-                                    data-change="1"
-                                >
-                                    +
-                                </button>
-                            </div>
-                            <div class="cart-item-total">
-                                <div class="cart-item-total-price">₹${(item.price * item.quantity).toLocaleString()}</div>
-                                <button
-                                    class="cart-item-remove-btn"
-                                    data-action="remove-from-cart"
-                                    data-product-id="${item.id}"
-                                >
-                                    Remove
-                                </button>
-                            </div>
-                        </div>
-                    `).join('')}
+                        `}).join('')}
                 </div>
                 <div class="cart-summary">
                     <div class="cart-total-amount">
                         <span>Total Amount:</span>
-                        <span class="cart-total-amount-value">₹${cartTotal.toLocaleString()}</span>
+                        <span class="cart-total-amount-value">₹${Math.round(cartTotal).toLocaleString()}</span>
                     </div>
                     <button class="checkout-btn" data-action="checkout">
                         Proceed to Checkout
@@ -488,10 +510,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
     };
+    // --------------------------------------------------------
 
-    /**
-     * Renders the wishlist view
-     */
     const renderWishlistView = () => {
         let contentHTML = '';
 
@@ -513,32 +533,40 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             contentHTML = `
                 <div class="wishlist-grid">
-                    ${wishlist.map(product => `
-                        <div class="wishlist-item">
-                            <div class="wishlist-item-top">
-                                <div class="wishlist-item-image">${product.image}</div>
+                    ${wishlist.map(product => {
+                         // Calculate discounted price for wishlist consistency
+                         const discountedPrice = product.price * (1 - (product.discount || 0) / 100);
+                         return `
+                            <div class="wishlist-item">
+                                <div class="wishlist-item-top">
+                                    <div class="wishlist-item-image">${product.image}</div>
+                                    <button
+                                        class="wishlist-item-remove-btn"
+                                        data-action="toggle-wishlist"
+                                        data-product-id="${product.id}"
+                                    >
+                                        <i data-lucide="heart"></i>
+                                    </button>
+                                </div>
+                                <h3 class="wishlist-item-name">${product.name}</h3>
+                                <p class="wishlist-item-description">${product.description}</p>
+                                <div class="wishlist-item-price">
+                                     ${product.discount > 0 ? `
+                                        <span style="font-size: 1.1em;">₹${Math.round(discountedPrice).toLocaleString()}</span>
+                                        <span class="product-price-original" style="font-size: 0.9em; margin-left: 5px;">₹${product.price.toLocaleString()}</span>
+                                    ` : `
+                                        <span>₹${product.price.toLocaleString()}</span>
+                                    `}
+                                </div>
                                 <button
-                                    class="wishlist-item-remove-btn"
-                                    data-action="toggle-wishlist"
+                                    class="wishlist-move-to-cart-btn"
+                                    data-action="move-to-cart"
                                     data-product-id="${product.id}"
                                 >
-                                    <i data-lucide="heart"></i>
+                                    Move to Cart
                                 </button>
                             </div>
-                            <h3 class="wishlist-item-name">${product.name}</h3>
-                            <p class="wishlist-item-description">${product.description}</p>
-                            <div class="wishlist-item-price">
-                                ₹${product.price.toLocaleString()}
-                            </div>
-                            <button
-                                class="wishlist-move-to-cart-btn"
-                                data-action="move-to-cart"
-                                data-product-id="${product.id}"
-                            >
-                                Move to Cart
-                            </button>
-                        </div>
-                    `).join('')}
+                        `}).join('')}
                 </div>
             `;
         }
@@ -554,15 +582,14 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     };
 
-    /**
-     * Renders the orders view (active and past)
-     */
     const renderOrdersView = () => {
-        const activeOrders = orders.filter(o => o.status !== 'delivered');
-        const pastOrders = orders.filter(o => o.status === 'delivered');
+        // Ensure orders is an array before filtering
+         const safeOrders = Array.isArray(orders) ? orders : [];
+         const activeOrders = safeOrders.filter(o => o && o.status !== 'delivered');
+         const pastOrders = safeOrders.filter(o => o && o.status === 'delivered');
         let contentHTML = '';
 
-        if (orders.length === 0) {
+        if (safeOrders.length === 0) {
             contentHTML = `
                 <div class="view-container">
                     <div class="empty-state">
@@ -580,7 +607,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
         } else {
-            // Active Orders HTML
             if (activeOrders.length > 0) {
                 contentHTML += `
                     <div class="orders-section">
@@ -594,7 +620,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
             }
-            // Past Orders HTML
             if (pastOrders.length > 0) {
                 contentHTML += `
                     <div class="orders-section">
@@ -619,57 +644,37 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     };
 
-    /**
-     * Helper function to render a single order card
-     */
     const renderOrderCard = (order, isActive) => {
+         // Add checks for potentially missing data
+         if (!order || !order.status || !order.orderId || !order.items || typeof order.total === 'undefined') {
+            console.warn("Skipping rendering invalid order:", order);
+            return ''; // Don't render if order data is incomplete
+         }
         const statusInfo = ORDER_STATUSES.find(s => s.status === order.status) || ORDER_STATUSES[0];
-        
-        const renderProgressBar = () => {
-            if (!isActive) return '';
-            const currentStatusIndex = ORDER_STATUSES.findIndex(s => s.status === order.status);
-            
-            return `
-                <div class="order-progress-bar">
-                    <div class="order-progress-container">
-                        ${ORDER_STATUSES.map((status, idx) => {
-                            const isActiveStep = currentStatusIndex >= idx;
-                            return `
-                                <div class="order-progress-step ${isActiveStep ? 'active' : ''}">
-                                    <div class="order-progress-step-content">
-                                        <div class="order-progress-icon ${status.status}">
-                                            <i data-lucide="${status.icon}"></i>
-                                        </div>
-                                        <div class="order-progress-label ${status.status}">
-                                            ${status.label}
-                                        </div>
-                                    </div>
-                                    ${idx < ORDER_STATUSES.length - 1 ? `
-                                        <div class="order-progress-line ${isActiveStep ? status.status : ''}"></div>
-                                    ` : ''}
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-            `;
-        };
 
-        const renderOrderItems = (items) => items.map(item => `
-            <div class="order-details-item ${isActive ? 'active-order' : 'past-order'}">
-                <div class="order-details-item-image">${item.image}</div>
-                <div class="order-details-item-details">
-                    <div class="order-details-item-name">${item.name}</div>
-                    <div class="order-details-item-description">${item.description}</div>
-                    <div class="order-details-item-quantity">
-                        Quantity: <span>${item.quantity}</span>
+        // REMOVED the automatic progress bar rendering as requested
+        // const renderProgressBar = () => { ... };
+
+        const renderOrderItems = (items) => (items || []).map(item => {
+             // Calculate discounted price for item display
+             const discountedPrice = (item.price || 0) * (1 - (item.discount || 0) / 100);
+             const itemTotalPrice = discountedPrice * (item.quantity || 1);
+             return `
+                <div class="order-details-item ${isActive ? 'active-order' : 'past-order'}">
+                    <div class="order-details-item-image">${item.image || '?'}</div>
+                    <div class="order-details-item-details">
+                        <div class="order-details-item-name">${item.name || 'Unknown Item'}</div>
+                        <div class="order-details-item-description">${item.description || ''}</div>
+                        <div class="order-details-item-quantity">
+                            Quantity: <span>${item.quantity || 1}</span>
+                        </div>
+                    </div>
+                    <div class="order-details-item-price">
+                        ₹${Math.round(itemTotalPrice).toLocaleString()}
                     </div>
                 </div>
-                <div class="order-details-item-price">
-                    ₹${(item.price * item.quantity).toLocaleString()}
-                </div>
-            </div>
-        `).join('');
+            `}).join('');
+
 
         return `
             <div class="order-card">
@@ -679,8 +684,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="order-card-id-value">${order.orderId}</div>
                         <div class="order-card-date">
                             ${isActive ? 'Placed on' : 'Delivered on'}
-                            ${new Date(order.date).toLocaleDateString()}
-                            ${isActive ? `at ${new Date(order.date).toLocaleTimeString()}` : ''}
+                            ${order.date ? new Date(order.date).toLocaleDateString() : 'N/A'}
+                            ${isActive && order.date ? `at ${new Date(order.date).toLocaleTimeString()}` : ''}
                         </div>
                     </div>
                     <div class="order-status-badge ${order.status}">
@@ -689,10 +694,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
 
-                ${renderProgressBar()}
-
                 <div class="order-card-footer-wrapper">
-                    ${isActive ? `
+                     ${isActive && order.estimatedDelivery ? `
                         <div class="order-delivery-estimate">
                             <span>Estimated Delivery:</span>
                             <span>${order.estimatedDelivery}</span>
@@ -714,33 +717,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
 
                 <div id="order-details-${order.orderId}" class="order-details-content hidden">
-                    ${renderOrderItems(order.items)}
+                     ${renderOrderItems(order.items)}
                 </div>
             </div>
         `;
     };
 
-    // --- EVENT LISTENERS ---
 
-    /**
-     * Sets up all event listeners for the application
-     */
+    // --- EVENT LISTENERS ---
     const setupEventListeners = () => {
-        // Event delegation for all dynamic clicks
         document.body.addEventListener('click', (event) => {
             const target = event.target;
             const actionTarget = target.closest('[data-action]');
-            
+
             if (!actionTarget) return;
+
+            // Prevent default for actual <a> tags used as buttons
+            if (actionTarget.tagName === 'A') {
+                event.preventDefault();
+            }
 
             const { action, productId, view: targetView, categoryId, sortId, change, orderId } = actionTarget.dataset;
 
             switch (action) {
                 case 'change-view':
-                    if (targetView === 'products') {
-                        // Reset filters when clicking logo
+                    if (targetView === 'products' && actionTarget.classList.contains('logo')) { // Only reset for logo click
                         selectedCategory = 'all';
                         searchQuery = '';
+                        sortBy = 'relevance'; // Optionally reset sort
                         searchInputDesktop.value = '';
                         searchInputMobile.value = '';
                     }
@@ -755,7 +759,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
                 case 'move-to-cart':
                     addToCart(parseInt(productId, 10));
-                    toggleWishlist(parseInt(productId, 10)); // This removes it from wishlist
+                    toggleWishlist(parseInt(productId, 10));
                     break;
                 case 'remove-from-cart':
                     removeFromCart(parseInt(productId, 10));
@@ -764,16 +768,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateQuantity(parseInt(productId, 10), parseInt(change, 10));
                     break;
                 case 'checkout':
-                    handleCheckout();
+                    handleCheckout(); // This now handles the redirect
                     break;
                 case 'toggle-category-menu':
                     showCategoryMenu = !showCategoryMenu;
-                    showSortMenu = false; // Close other menu
+                    showSortMenu = false;
                     renderApp();
                     break;
                 case 'toggle-sort-menu':
                     showSortMenu = !showSortMenu;
-                    showCategoryMenu = false; // Close other menu
+                    showCategoryMenu = false;
                     renderApp();
                     break;
                 case 'select-category':
@@ -790,44 +794,61 @@ document.addEventListener('DOMContentLoaded', () => {
                     const detailsEl = document.getElementById(`order-details-${orderId}`);
                     if (detailsEl) {
                         detailsEl.classList.toggle('hidden');
+                        // Optional: Change button text
+                        actionTarget.textContent = detailsEl.classList.contains('hidden') ? 'View Details' : 'Hide Details';
                     }
                     break;
             }
         });
 
-        // Search input listeners
         const handleSearch = (event) => {
             searchQuery = event.target.value;
-            // Sync search bars
             if (event.target.id === 'search-input-desktop') {
                 searchInputMobile.value = searchQuery;
             } else {
                 searchInputDesktop.value = searchQuery;
             }
-            // Re-render only if on products view
-            if (view === 'products') {
-                renderApp();
+             // Always switch to products view on search
+            if (view !== 'products') {
+                view = 'products';
             }
+             renderApp(); // Render immediately on input
         };
         searchInputDesktop.addEventListener('input', handleSearch);
         searchInputMobile.addEventListener('input', handleSearch);
 
-        // Global click listener to close dropdowns
         window.addEventListener('click', (event) => {
-            if (!showCategoryMenu && !showSortMenu) return;
-
-            if (!event.target.closest('#category-dropdown-container') && showCategoryMenu) {
+             // Only close if a menu is open and the click is outside BOTH dropdown containers
+             if ((showCategoryMenu || showSortMenu) &&
+                 !event.target.closest('#category-dropdown-container') &&
+                 !event.target.closest('#sort-dropdown-container'))
+             {
                 showCategoryMenu = false;
-                if (view === 'products') renderApp();
-            }
-            if (!event.target.closest('#sort-dropdown-container') && showSortMenu) {
                 showSortMenu = false;
-                if (view === 'products') renderApp();
+                if (view === 'products') renderApp(); // Re-render only if needed
             }
         });
     };
 
     // --- INITIALIZATION ---
     setupEventListeners();
+
+    // Check for redirect flag from payment.js
+    const redirectTo = localStorage.getItem('redirectTo');
+    if (redirectTo) {
+        view = redirectTo;
+        localStorage.removeItem('redirectTo'); // Clear the flag
+    } else {
+        // Check for view from URL parameter (e.g., from payment.html header)
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlView = urlParams.get('view');
+        if (urlView && ['products', 'cart', 'wishlist', 'orders'].includes(urlView)) {
+            view = urlView;
+        } else {
+             view = 'products'; // Default view if nothing else specified
+        }
+    }
+
     renderApp(); // Initial render on page load
+
 });

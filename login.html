@@ -3,239 +3,362 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login - ShopHub</title>
+  <title>Login - Vendora</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #e0f2fe;
       min-height: 100vh;
+      height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 0;
+      margin: 0;
       color: #1f2937;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow: hidden;
+    }
+
+    /* Animated background elements */
+    body::before {
+      content: '';
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(14,165,233,0.15) 0%, transparent 70%);
+      border-radius: 50%;
+      top: -250px;
+      right: -250px;
+      animation: float 8s ease-in-out infinite;
+    }
+
+    body::after {
+      content: '';
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%);
+      border-radius: 50%;
+      bottom: -200px;
+      left: -200px;
+      animation: float 10s ease-in-out infinite reverse;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(30px, -30px) scale(1.1); }
     }
 
     .container {
       width: 100%;
-      max-width: 450px;
-      background: #ffffff;
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-      border: 1px solid #e5e7eb;
+      max-width: 360px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 18px;
+      box-shadow: 0 25px 70px rgba(0,0,0,0.15);
+      border: 1px solid rgba(255,255,255,0.8);
       overflow: hidden;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      margin-top: 6px;
+      z-index: 1;
+      animation: slideIn 0.6s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .header {
-      background: #0ea5e9;
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
       color: white;
       text-align: center;
-      padding: 30px 20px;
+      padding: 20px 15px;
+      position: relative;
+      overflow: hidden;
     }
 
-    .header h1 {
-      font-size: 2em;
-      margin-bottom: 10px;
+    .header::before {
+      content: '';
+      position: absolute;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      top: -50%;
+      left: -50%;
+      animation: rotate 15s linear infinite;
     }
 
-    .header p {
-      font-size: 1em;
-      opacity: 0.9;
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .header h1 { 
+      font-size: 1.8em; 
+      margin-bottom: 4px; 
+      position: relative;
+      z-index: 1;
+      font-weight: 700;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .header p { 
+      font-size: 0.8em; 
+      opacity: 0.95; 
+      position: relative;
+      z-index: 1;
     }
 
     /* Role Buttons */
     .role-buttons {
       display: flex;
       justify-content: space-around;
-      background: #f0f9ff;
+      background: linear-gradient(to bottom, #f0f9ff, #ffffff);
       border-bottom: 1px solid #e5e7eb;
+      padding: 5px;
+      gap: 5px;
+      position: relative;
     }
 
     .role-btn {
       flex: 1;
-      padding: 15px;
+      padding: 10px;
       background: transparent;
       border: none;
-      font-size: 1em;
+      font-size: 0.85em;
       font-weight: 600;
       cursor: pointer;
       color: #6b7280;
-      transition: all 0.3s ease;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
     }
 
-    .role-btn.active {
-      background: #0ea5e9;
+    .role-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: -1;
+      border-radius: 10px;
+    }
+
+    .role-btn.active::before {
+      transform: scaleX(1);
+    }
+
+    .role-btn.active { 
       color: white;
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(14,165,233,0.3);
     }
 
-    .role-btn:hover {
-      background: #0284c7;
-      color: white;
+    .role-btn:hover:not(.active) { 
+      background: rgba(14,165,233,0.1);
+      color: #0284c7;
+      transform: translateY(-2px);
     }
 
-    .form-container {
-      padding: 35px;
+    .form-container { 
+      padding: 20px; 
+      animation: fadeIn 0.5s ease-out;
     }
 
-    .section-header {
-      text-align: center;
-      margin-bottom: 25px;
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-header { 
+      text-align: center; 
+      margin-bottom: 16px; 
     }
 
     .section-icon {
-      width: 70px;
-      height: 70px;
-      margin: 0 auto 15px;
+      width: 55px; 
+      height: 55px;
+      margin: 0 auto 10px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2em;
+      font-size: 1.6em;
       color: white;
+      position: relative;
+      animation: iconPulse 2s ease-in-out infinite;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }
 
-    .customer-icon {
-      background: #0ea5e9;
+    @keyframes iconPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+      50% { transform: scale(1.05); box-shadow: 0 15px 40px rgba(0,0,0,0.25); }
     }
 
-    .seller-icon {
-      background: #3b82f6;
+    .customer-icon { 
+      background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+    }
+    .seller-icon { 
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    }
+    .admin-icon { 
+      background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
     }
 
-    .admin-icon {
-      background: #a855f7;
+    .section-header h2 { 
+      color: #1f2937; 
+      font-size: 1.3em; 
+      margin-bottom: 4px;
+      font-weight: 700;
+    }
+    .section-header p { 
+      color: #6b7280; 
+      font-size: 0.8em; 
     }
 
-    .section-header h2 {
-      color: #1f2937;
-      font-size: 1.5em;
-      margin-bottom: 5px;
+    .form-group { 
+      margin-bottom: 14px; 
+      position: relative;
     }
 
-    .section-header p {
-      color: #6b7280;
-      font-size: 0.9em;
-    }
-
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      color: #1f2937;
-      font-weight: 500;
-      font-size: 0.95em;
+    label { 
+      display: block; 
+      margin-bottom: 6px; 
+      color: #1f2937; 
+      font-weight: 600; 
+      font-size: 0.85em; 
     }
 
     input {
       width: 100%;
-      padding: 12px 15px;
+      padding: 10px 12px;
       border: 2px solid #bae6fd;
       border-radius: 8px;
-      font-size: 1em;
-      transition: all 0.3s ease;
+      font-size: 0.9em;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       outline: none;
       background: #ffffff;
     }
 
-    input:focus {
-      border-color: #0ea5e9;
-      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+    input:focus { 
+      border-color: #0ea5e9; 
+      box-shadow: 0 0 0 4px rgba(14,165,233,0.15);
+      transform: translateY(-2px);
+    }
+
+    input:hover {
+      border-color: #7dd3fc;
     }
 
     .btn {
       width: 100%;
-      padding: 14px;
+      padding: 11px;
       border: none;
       border-radius: 8px;
-      font-size: 1.05em;
-      font-weight: 600;
+      font-size: 0.95em;
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       color: white;
-      margin-top: 10px;
+      margin-top: 8px;
+      position: relative;
+      overflow: hidden;
     }
 
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
     }
 
-    .btn-primary {
-      background: #0ea5e9;
+    .btn:hover::before {
+      width: 300px;
+      height: 300px;
     }
 
-    .btn-primary:hover {
-      background: #0284c7;
+    .btn:hover { 
+      transform: translateY(-3px); 
+      box-shadow: 0 10px 25px rgba(14,165,233,0.4);
     }
 
-    .forgot-password {
-      text-align: center;
-      margin-top: 15px;
+    .btn:active {
+      transform: translateY(-1px);
     }
 
-    .forgot-password a {
-      color: #0ea5e9;
-      text-decoration: none;
-      font-size: 0.9em;
+    .btn-primary { 
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
     }
 
-    .forgot-password a:hover {
+    .forgot-password { 
+      text-align: center; 
+      margin-top: 10px; 
+    }
+    .forgot-password a { 
+      color: #0ea5e9; 
+      text-decoration: none; 
+      font-size: 0.8em;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    .forgot-password a:hover { 
       text-decoration: underline;
+      color: #0284c7;
     }
 
-    .signup-link {
-      text-align: center;
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1px solid #e5e7eb;
-      font-size: 0.9em;
-      color: #6b7280;
+    .signup-link { 
+      text-align: center; 
+      margin-top: 15px; 
+      padding-top: 15px; 
+      border-top: 1px solid #e5e7eb; 
+      font-size: 0.8em; 
+      color: #6b7280; 
     }
-
-    .signup-link a {
-      color: #0ea5e9;
-      text-decoration: none;
-      font-weight: 600;
+    .signup-link a { 
+      color: #0ea5e9; 
+      text-decoration: none; 
+      font-weight: 700;
+      transition: all 0.3s ease;
     }
-
-    .signup-link a:hover {
+    .signup-link a:hover { 
       text-decoration: underline;
+      color: #0284c7;
     }
 
-    .message {
-      padding: 10px;
-      border-radius: 6px;
-      margin-bottom: 15px;
-      font-size: 0.9em;
-      display: none;
-    }
-
-    .message.success {
-      background: #d1fae5;
-      color: #065f46;
-      border: 1px solid #059669;
-    }
-
-    .message.error {
-      background: #fee2e2;
-      color: #991b1b;
-      border: 1px solid #f87171;
+    @media (max-width: 600px) {
+      .container { max-width: 100%; margin: 10px; }
+      .form-container { padding: 30px 25px; }
+      .header h1 { font-size: 2em; }
+      .role-btn { padding: 12px; font-size: 0.9em; }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>🛍 ShopHub</h1>
+      <h1>Vendora</h1>
       <p>Your Ultimate Multi-Vendor Shopping Destination</p>
     </div>
 
@@ -247,15 +370,14 @@
     </div>
 
     <!-- Form Container -->
-    <div class="form-container" id="formContainer">
-      <!-- Form will load dynamically -->
-    </div>
+    <div class="form-container" id="formContainer"></div>
   </div>
 
   <script>
     const formContainer = document.getElementById("formContainer");
     const roleButtons = document.querySelectorAll(".role-btn");
 
+    // Forms for each role
     const forms = {
       customer: `
         <div class="section-header">
@@ -263,21 +385,17 @@
           <h2>Customer Login</h2>
           <p>Shop your favorite products</p>
         </div>
-
-        <div id="customerMessage" class="message"></div>
-        <form id="customerForm">
-          <div class="form-group">
-            <label for="customerUsername">Username</label>
-            <input type="text" id="customerUsername" placeholder="Enter your username" required />
-          </div>
-          <div class="form-group">
-            <label for="customerPassword">Password</label>
-            <input type="password" id="customerPassword" placeholder="Enter your password" required />
-          </div>
-          <button type="submit" class="btn btn-primary">Login</button>
-          <div class="forgot-password"><a href="#">Forgot Password?</a></div>
-          <div class="signup-link">Don't have an account? <a href="#">Sign Up</a></div>
-        </form>
+        <div class="form-group">
+          <label for="customerUsername">Username</label>
+          <input type="text" id="customerUsername" placeholder="Enter your username" required />
+        </div>
+        <div class="form-group">
+          <label for="customerPassword">Password</label>
+          <input type="password" id="customerPassword" placeholder="Enter your password" required />
+        </div>
+        <button type="button" class="btn btn-primary" id="customerLoginBtn">Login</button>
+        <div class="forgot-password"><a href="resetpass.html">Forgot Password?</a></div>
+        <div class="signup-link">Don't have an account? <a href="registrationcust.html">Sign Up</a></div>
       `,
       seller: `
         <div class="section-header">
@@ -285,21 +403,17 @@
           <h2>Seller Login</h2>
           <p>Manage your store & products</p>
         </div>
-
-        <div id="sellerMessage" class="message"></div>
-        <form id="sellerForm">
-          <div class="form-group">
-            <label for="sellerId">Seller ID</label>
-            <input type="text" id="sellerId" placeholder="Enter your seller ID" required />
-          </div>
-          <div class="form-group">
-            <label for="sellerPassword">Password</label>
-            <input type="password" id="sellerPassword" placeholder="Enter your password" required />
-          </div>
-          <button type="submit" class="btn btn-primary">Login</button>
-          <div class="forgot-password"><a href="#">Forgot Password?</a></div>
-          <div class="signup-link">Want to sell? <a href="#">Register as Seller</a></div>
-        </form>
+        <div class="form-group">
+          <label for="sellerId">Seller ID</label>
+          <input type="text" id="sellerId" placeholder="Enter your seller ID" required />
+        </div>
+        <div class="form-group">
+          <label for="sellerPassword">Password</label>
+          <input type="password" id="sellerPassword" placeholder="Enter your password" required />
+        </div>
+        <button type="button" class="btn btn-primary" id="sellerLoginBtn">Login</button>
+        <div class="forgot-password"><a href="resetpass.html">Forgot Password?</a></div>
+        <div class="signup-link">Want to sell? <a href="registrationseller.html">Register as Seller</a></div>
       `,
       admin: `
         <div class="section-header">
@@ -307,43 +421,64 @@
           <h2>Admin Login</h2>
           <p>Platform management access</p>
         </div>
-
-        <div id="adminMessage" class="message"></div>
-        <form id="adminForm">
-          <div class="form-group">
-            <label for="adminId">Admin ID</label>
-            <input type="text" id="adminId" placeholder="Enter your admin ID" required />
-          </div>
-          <div class="form-group">
-            <label for="adminPassword">Password</label>
-            <input type="password" id="adminPassword" placeholder="Enter your password" required />
-          </div>
-          <button type="submit" class="btn btn-primary">Login</button>
-          <div class="forgot-password"><a href="#">Forgot Password?</a></div>
-        </form>
-      `,
+        <div class="form-group">
+          <label for="adminId">Admin ID</label>
+          <input type="text" id="adminId" placeholder="Enter your admin ID" required />
+        </div>
+        <div class="form-group">
+          <label for="adminPassword">Password</label>
+          <input type="password" id="adminPassword" placeholder="Enter your password" required />
+        </div>
+        <button type="button" class="btn btn-primary" id="adminLoginBtn">Login</button>
+        <div class="forgot-password"><a href="resetpass.html">Forgot Password?</a></div>
+      `
     };
 
-    // Load default (customer)
+    // Load default form (customer)
     formContainer.innerHTML = forms.customer;
+    document.getElementById("customerLoginBtn").addEventListener("click", () => {
+      window.location.href = "homecustomer.html";
+    });
 
-    // Switch Form Function
-    roleButtons.forEach((btn) => {
+    // Role switch buttons
+    roleButtons.forEach(btn => {
       btn.addEventListener("click", () => {
-        roleButtons.forEach((b) => b.classList.remove("active"));
+        roleButtons.forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
 
-        if (btn.id === "btnCustomer") {
-          formContainer.innerHTML = forms.customer;
-        } else if (btn.id === "btnSeller") {
-          formContainer.innerHTML = forms.seller;
-        } else {
-          formContainer.innerHTML = forms.admin;
-        }
+        // Add fade out effect
+        formContainer.style.opacity = '0';
+        formContainer.style.transform = 'translateY(10px)';
+
+        setTimeout(() => {
+          if (btn.id === "btnCustomer") {
+            formContainer.innerHTML = forms.customer;
+            document.getElementById("customerLoginBtn").addEventListener("click", () => {
+              window.location.href = "homecustomer.html";
+            });
+          } else if (btn.id === "btnSeller") {
+            formContainer.innerHTML = forms.seller;
+            document.getElementById("sellerLoginBtn").addEventListener("click", () => {
+              window.location.href = "new item seller.html";
+            });
+          } else if (btn.id === "btnAdmin") {
+            formContainer.innerHTML = forms.admin;
+            document.getElementById("adminLoginBtn").addEventListener("click", () => {
+              window.location.href = "admin.html";
+            });
+          }
+
+          // Fade in effect
+          setTimeout(() => {
+            formContainer.style.opacity = '1';
+            formContainer.style.transform = 'translateY(0)';
+          }, 50);
+        }, 300);
       });
     });
 
-    // Optional: Add login success message handlers (you can reuse your earlier logic)
+    // Set transition for smooth animations
+    formContainer.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
   </script>
 </body>
 </html>

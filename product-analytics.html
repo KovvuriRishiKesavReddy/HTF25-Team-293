@@ -293,7 +293,37 @@
             color: #dc2626;
             text-decoration: line-through;
         }
+        /* Navbar Styles */
+        .navbar {
+            background: #0077cc;
+            color: #fff;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
 
+        .navbar .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .navbar .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .navbar .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .navbar .nav-links a:hover {
+            color: #ffeb3b; /* Hover effect */
+        }
         .status-badge {
             padding: 8px 16px;
             border-radius: 12px;
@@ -350,6 +380,13 @@
     </style>
 </head>
 <body>
+    <div class="navbar" style="background:#0077cc; color:#fff; padding:12px 20px; display:flex; justify-content:space-between; align-items:center;">
+        <div class="logo" style="font-size:24px; font-weight:bold;">Vendora</div>
+            <div class="nav-links" style="display:flex; gap:20px;">
+            <a href="new item seller.html" style="color:#fff; text-decoration:none; font-weight:500;">Products</a>
+            <a href="order seller.html" style="color:#fff; text-decoration:none; font-weight:500;">Orders</a>
+            </div>
+    </div>
     <div class="header">
         <div class="header-container">
             <div class="header-title">
